@@ -2,12 +2,12 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { DataTable } from '@/components/admin/DataTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
-import { mockDashboardStats, mockDocuments, mockUsers } from '@/data/mockData';
-import { Users, FileText, Crown, Clock, Globe, TrendingUp } from 'lucide-react';
+import { mockDashboardStats, mockUsers, mockChecklists, mockCountries, mockVisaTypes } from '@/data/mockData';
+import { Users, Crown, Globe, CheckSquare, Stamp, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
   const recentUsers = mockUsers.slice(0, 5);
-  const pendingDocs = mockDocuments.filter(d => !d.isVerified && !d.isRejected).slice(0, 5);
 
   const userColumns = [
     { key: 'fullName', header: 'Name' },
@@ -22,13 +22,6 @@ export default function Dashboard() {
       )
     },
     { key: 'createdAt', header: 'Joined' },
-  ];
-
-  const docColumns = [
-    { key: 'userName', header: 'User' },
-    { key: 'categoryName', header: 'Category' },
-    { key: 'originalName', header: 'File' },
-    { key: 'createdAt', header: 'Uploaded' },
   ];
 
   return (
@@ -59,19 +52,19 @@ export default function Dashboard() {
             trend={{ value: 23, label: 'vs last month' }}
           />
           <StatsCard
-            title="Pending Reviews"
-            value={mockDashboardStats.pendingDocuments}
-            icon={<Clock className="h-5 w-5 text-primary" />}
-          />
-          <StatsCard
-            title="Total Documents"
-            value={mockDashboardStats.totalDocuments.toLocaleString()}
-            icon={<FileText className="h-5 w-5 text-primary" />}
-          />
-          <StatsCard
             title="Countries"
-            value={mockDashboardStats.totalCountries}
+            value={mockCountries.filter(c => c.isActive).length}
             icon={<Globe className="h-5 w-5 text-primary" />}
+          />
+          <StatsCard
+            title="Visa Types"
+            value={mockVisaTypes.filter(v => v.isActive).length}
+            icon={<Stamp className="h-5 w-5 text-primary" />}
+          />
+          <StatsCard
+            title="Checklists"
+            value={mockChecklists.length}
+            icon={<CheckSquare className="h-5 w-5 text-primary" />}
           />
         </div>
 
@@ -79,21 +72,49 @@ export default function Dashboard() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Recent Users</h2>
-              <a href="/admin/users" className="text-sm text-primary hover:underline">
+              <Link to="/admin/users" className="text-sm text-primary hover:underline">
                 View all
-              </a>
+              </Link>
             </div>
             <DataTable columns={userColumns} data={recentUsers} />
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">Pending Documents</h2>
-              <a href="/admin/documents" className="text-sm text-primary hover:underline">
-                View all
-              </a>
+              <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
             </div>
-            <DataTable columns={docColumns} data={pendingDocs} />
+            <div className="grid gap-3">
+              <Link 
+                to="/admin/checklists" 
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent transition-colors"
+              >
+                <CheckSquare className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">Manage Checklists</p>
+                  <p className="text-sm text-muted-foreground">Add or edit visa checklists and items</p>
+                </div>
+              </Link>
+              <Link 
+                to="/admin/visa-types" 
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent transition-colors"
+              >
+                <Stamp className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">Manage Visa Types</p>
+                  <p className="text-sm text-muted-foreground">Configure visa types per country</p>
+                </div>
+              </Link>
+              <Link 
+                to="/admin/countries" 
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent transition-colors"
+              >
+                <Globe className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">Manage Countries</p>
+                  <p className="text-sm text-muted-foreground">Add or edit destination countries</p>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
