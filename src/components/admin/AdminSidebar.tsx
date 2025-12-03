@@ -3,24 +3,18 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Users,
-  FileText,
   Globe,
   CheckSquare,
-  CreditCard,
-  Database,
+  Stamp,
   Settings,
-  Shield,
 } from 'lucide-react';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
   { icon: Users, label: 'Users', href: '/admin/users' },
-  { icon: FileText, label: 'Documents', href: '/admin/documents' },
   { icon: Globe, label: 'Countries', href: '/admin/countries' },
+  { icon: Stamp, label: 'Visa Types', href: '/admin/visa-types' },
   { icon: CheckSquare, label: 'Checklists', href: '/admin/checklists' },
-  { icon: CreditCard, label: 'Subscriptions', href: '/admin/subscriptions' },
-  { icon: Database, label: 'Storage', href: '/admin/storage' },
-  { icon: Shield, label: 'Auth & Security', href: '/admin/auth' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
 
@@ -48,8 +42,8 @@ export function AdminSidebar() {
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
               )}
             >
               <item.icon className="h-4 w-4" />
