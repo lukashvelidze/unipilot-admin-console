@@ -4,6 +4,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { mockChecklists, mockChecklistItems, mockVisaTypes, mockCountries, Checklist, ChecklistItem } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Search, Plus, ChevronRight, ChevronDown, Edit, Trash2, GripVertical } from 'lucide-react';
 import {
   Dialog,
@@ -21,9 +22,6 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-
-type FieldType = 'checkbox' | 'text' | 'file' | 'date' | 'select';
 
 export default function ChecklistsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,18 +32,29 @@ export default function ChecklistsPage() {
   
   const [isChecklistDialogOpen, setIsChecklistDialogOpen] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<Checklist | null>(null);
-  const [checklistForm, setChecklistForm] = useState({ countryCode: '', visaTypeCode: '', title: '', subscriptionTier: 'free' as Checklist['subscriptionTier'] });
+  const [checklistForm, setChecklistForm] = useState({ 
+    country_code: '', 
+    visa_type: '', 
+    title: '', 
+    subscription_tier: 'free' as Checklist['subscription_tier'],
+    sort_order: 0
+  });
   
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
   const [currentChecklistId, setCurrentChecklistId] = useState<string | null>(null);
-  const [itemForm, setItemForm] = useState({ label: '', fieldType: 'checkbox' as FieldType });
+  const [itemForm, setItemForm] = useState({ 
+    label: '', 
+    field_type: 'checkbox',
+    sort_order: 0,
+    metadata: '{}'
+  });
   
   const { toast } = useToast();
 
   const filteredChecklists = checklists.filter(checklist => {
     const matchesSearch = checklist.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCountry = selectedCountry === 'all' || checklist.countryCode === selectedCountry;
+    const matchesCountry = selectedCountry === 'all' || checklist.country_code === selectedCountry;
     return matchesSearch && matchesCountry;
   });
 
@@ -59,10 +68,10 @@ export default function ChecklistsPage() {
   };
 
   const getVisaTypesForCountry = (countryCode: string) => 
-    mockVisaTypes.filter(v => v.countryCode === countryCode && v.isActive);
+    mockVisaTypes.filter(v => v.country_code === countryCode && v.is_active);
 
   const getItemsForChecklist = (checklistId: string) => 
-    checklistItems.filter(item => item.checklistId === checklistId).sort((a, b) => a.sortOrder - b.sortOrder);
+    checklistItems.filter(item => item.checklist_id === checklistId).sort((a, b) => a.sort_order - b.sort_order);
 
   const getVisaTitle = (code: string) => mockVisaTypes.find(v => v.code === code)?.title || code;
   const getCountryName = (code: string) => mockCountries.find(c => c.code === code)?.name || code;
@@ -72,34 +81,45 @@ export default function ChecklistsPage() {
     if (checklist) {
       setEditingChecklist(checklist);
       setChecklistForm({ 
-        countryCode: checklist.countryCode, 
-        visaTypeCode: checklist.visaTypeCode, 
+        country_code: checklist.country_code || '', 
+        visa_type: checklist.visa_type, 
         title: checklist.title, 
-        subscriptionTier: checklist.subscriptionTier 
+        subscription_tier: checklist.subscription_tier,
+        sort_order: checklist.sort_order
       });
     } else {
       setEditingChecklist(null);
-      setChecklistForm({ countryCode: '', visaTypeCode: '', title: '', subscriptionTier: 'free' });
+      setChecklistForm({ country_code: '', visa_type: '', title: '', subscription_tier: 'free', sort_order: 0 });
     }
     setIsChecklistDialogOpen(true);
   };
 
   const handleChecklistSubmit = () => {
-    if (!checklistForm.countryCode || !checklistForm.visaTypeCode || !checklistForm.title) {
+    if (!checklistForm.country_code || !checklistForm.visa_type || !checklistForm.title) {
       toast({ title: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
 
     if (editingChecklist) {
       setChecklists(prev => prev.map(c => 
-        c.id === editingChecklist.id ? { ...c, ...checklistForm } : c
+        c.id === editingChecklist.id ? { 
+          ...c, 
+          country_code: checklistForm.country_code,
+          visa_type: checklistForm.visa_type,
+          title: checklistForm.title,
+          subscription_tier: checklistForm.subscription_tier,
+          sort_order: checklistForm.sort_order
+        } : c
       ));
       toast({ title: 'Checklist updated' });
     } else {
       const newChecklist: Checklist = {
-        id: Date.now().toString(),
-        ...checklistForm,
-        sortOrder: checklists.filter(c => c.visaTypeCode === checklistForm.visaTypeCode).length + 1,
+        id: crypto.randomUUID(),
+        country_code: checklistForm.country_code,
+        visa_type: checklistForm.visa_type,
+        title: checklistForm.title,
+        subscription_tier: checklistForm.subscription_tier,
+        sort_order: checklists.filter(c => c.visa_type === checklistForm.visa_type).length + 1,
       };
       setChecklists(prev => [...prev, newChecklist]);
       toast({ title: 'Checklist created' });
@@ -109,7 +129,7 @@ export default function ChecklistsPage() {
 
   const deleteChecklist = (id: string) => {
     setChecklists(prev => prev.filter(c => c.id !== id));
-    setChecklistItems(prev => prev.filter(item => item.checklistId !== id));
+    setChecklistItems(prev => prev.filter(item => item.checklist_id !== id));
     toast({ title: 'Checklist deleted' });
   };
 
@@ -118,10 +138,15 @@ export default function ChecklistsPage() {
     setCurrentChecklistId(checklistId);
     if (item) {
       setEditingItem(item);
-      setItemForm({ label: item.label, fieldType: item.fieldType });
+      setItemForm({ 
+        label: item.label, 
+        field_type: item.field_type,
+        sort_order: item.sort_order,
+        metadata: JSON.stringify(item.metadata, null, 2)
+      });
     } else {
       setEditingItem(null);
-      setItemForm({ label: '', fieldType: 'checkbox' });
+      setItemForm({ label: '', field_type: 'checkbox', sort_order: 0, metadata: '{}' });
     }
     setIsItemDialogOpen(true);
   };
@@ -132,19 +157,33 @@ export default function ChecklistsPage() {
       return;
     }
 
+    let parsedMetadata: Record<string, unknown> = {};
+    try {
+      parsedMetadata = JSON.parse(itemForm.metadata);
+    } catch {
+      toast({ title: 'Invalid JSON in metadata', variant: 'destructive' });
+      return;
+    }
+
     if (editingItem) {
       setChecklistItems(prev => prev.map(i => 
-        i.id === editingItem.id ? { ...i, ...itemForm } : i
+        i.id === editingItem.id ? { 
+          ...i, 
+          label: itemForm.label,
+          field_type: itemForm.field_type,
+          sort_order: itemForm.sort_order,
+          metadata: parsedMetadata
+        } : i
       ));
       toast({ title: 'Item updated' });
     } else {
       const newItem: ChecklistItem = {
-        id: Date.now().toString(),
-        checklistId: currentChecklistId,
+        id: crypto.randomUUID(),
+        checklist_id: currentChecklistId,
         label: itemForm.label,
-        fieldType: itemForm.fieldType,
-        sortOrder: getItemsForChecklist(currentChecklistId).length + 1,
-        metadata: {},
+        field_type: itemForm.field_type,
+        sort_order: getItemsForChecklist(currentChecklistId).length + 1,
+        metadata: parsedMetadata,
       };
       setChecklistItems(prev => [...prev, newItem]);
       toast({ title: 'Item added' });
@@ -194,7 +233,7 @@ export default function ChecklistsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Countries</SelectItem>
-              {mockCountries.filter(c => c.isActive).map(country => (
+              {mockCountries.filter(c => c.is_active).map(country => (
                 <SelectItem key={country.code} value={country.code}>{country.name}</SelectItem>
               ))}
             </SelectContent>
@@ -225,12 +264,12 @@ export default function ChecklistsPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-foreground">{checklist.title}</span>
-                        <StatusBadge status={tierColors[checklist.subscriptionTier]}>
-                          {checklist.subscriptionTier}
+                        <StatusBadge status={tierColors[checklist.subscription_tier]}>
+                          {checklist.subscription_tier}
                         </StatusBadge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {getCountryName(checklist.countryCode)} • {getVisaTitle(checklist.visaTypeCode)} • {items.length} items
+                        {getCountryName(checklist.country_code || '')} • {getVisaTitle(checklist.visa_type)} • {items.length} items
                       </p>
                     </div>
                     <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
@@ -251,7 +290,10 @@ export default function ChecklistsPage() {
                             <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                             <div className="flex-1">
                               <p className="text-sm font-medium text-foreground">{item.label}</p>
-                              <p className="text-xs text-muted-foreground">Type: {item.fieldType}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Type: {item.field_type} • Sort: {item.sort_order}
+                                {Object.keys(item.metadata).length > 0 && ` • Has metadata`}
+                              </p>
                             </div>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openItemDialog(checklist.id, item)}>
                               <Edit className="h-3.5 w-3.5" />
@@ -289,12 +331,12 @@ export default function ChecklistsPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Country *</Label>
-              <Select value={checklistForm.countryCode} onValueChange={(v) => setChecklistForm(f => ({ ...f, countryCode: v, visaTypeCode: '' }))}>
+              <Select value={checklistForm.country_code} onValueChange={(v) => setChecklistForm(f => ({ ...f, country_code: v, visa_type: '' }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockCountries.filter(c => c.isActive).map(country => (
+                  {mockCountries.filter(c => c.is_active).map(country => (
                     <SelectItem key={country.code} value={country.code}>{country.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -303,15 +345,15 @@ export default function ChecklistsPage() {
             <div className="space-y-2">
               <Label>Visa Type *</Label>
               <Select 
-                value={checklistForm.visaTypeCode} 
-                onValueChange={(v) => setChecklistForm(f => ({ ...f, visaTypeCode: v }))}
-                disabled={!checklistForm.countryCode}
+                value={checklistForm.visa_type} 
+                onValueChange={(v) => setChecklistForm(f => ({ ...f, visa_type: v }))}
+                disabled={!checklistForm.country_code}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select visa type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {getVisaTypesForCountry(checklistForm.countryCode).map(visa => (
+                  {getVisaTypesForCountry(checklistForm.country_code).map(visa => (
                     <SelectItem key={visa.code} value={visa.code}>{visa.title}</SelectItem>
                   ))}
                 </SelectContent>
@@ -325,22 +367,32 @@ export default function ChecklistsPage() {
                 placeholder="e.g., Pre-Application Documents"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Subscription Tier</Label>
-              <Select 
-                value={checklistForm.subscriptionTier} 
-                onValueChange={(v) => setChecklistForm(f => ({ ...f, subscriptionTier: v as Checklist['subscriptionTier'] }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="premium">Premium</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Subscription Tier</Label>
+                <Select 
+                  value={checklistForm.subscription_tier} 
+                  onValueChange={(v) => setChecklistForm(f => ({ ...f, subscription_tier: v as Checklist['subscription_tier'] }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="basic">Basic</SelectItem>
+                    <SelectItem value="standard">Standard</SelectItem>
+                    <SelectItem value="premium">Premium</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Sort Order</Label>
+                <Input 
+                  type="number"
+                  value={checklistForm.sort_order} 
+                  onChange={(e) => setChecklistForm(f => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -365,23 +417,42 @@ export default function ChecklistsPage() {
                 placeholder="e.g., Valid Passport"
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Field Type</Label>
+                <Select 
+                  value={itemForm.field_type} 
+                  onValueChange={(v) => setItemForm(f => ({ ...f, field_type: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="checkbox">Checkbox</SelectItem>
+                    <SelectItem value="text">Text Input</SelectItem>
+                    <SelectItem value="file">File Upload</SelectItem>
+                    <SelectItem value="date">Date Picker</SelectItem>
+                    <SelectItem value="select">Dropdown Select</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Sort Order</Label>
+                <Input 
+                  type="number"
+                  value={itemForm.sort_order} 
+                  onChange={(e) => setItemForm(f => ({ ...f, sort_order: parseInt(e.target.value) || 0 }))}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label>Field Type</Label>
-              <Select 
-                value={itemForm.fieldType} 
-                onValueChange={(v) => setItemForm(f => ({ ...f, fieldType: v as FieldType }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="checkbox">Checkbox</SelectItem>
-                  <SelectItem value="text">Text Input</SelectItem>
-                  <SelectItem value="file">File Upload</SelectItem>
-                  <SelectItem value="date">Date Picker</SelectItem>
-                  <SelectItem value="select">Dropdown Select</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Metadata (JSON)</Label>
+              <Textarea 
+                value={itemForm.metadata} 
+                onChange={(e) => setItemForm(f => ({ ...f, metadata: e.target.value }))}
+                placeholder='{"options": ["opt1", "opt2"]}'
+                className="font-mono text-sm h-24"
+              />
             </div>
           </div>
           <DialogFooter>

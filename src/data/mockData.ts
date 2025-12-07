@@ -1,4 +1,4 @@
-// Mock data for the admin dashboard
+// Mock data for the admin dashboard - matching Supabase schema
 
 export interface User {
   id: string;
@@ -20,7 +20,7 @@ export interface Profile {
   destinationCountry: string;
   levelOfStudy: string;
   visaType: string;
-  subscriptionTier: 'free' | 'premium';
+  subscriptionTier: 'free' | 'standard' | 'premium';
   createdAt: string;
 }
 
@@ -33,37 +33,41 @@ export interface DashboardStats {
   totalCountries: number;
 }
 
+// Matches: public.destination_countries
 export interface Country {
-  code: string;
+  code: string;  // PK
   name: string;
-  isActive: boolean;
+  is_active: boolean;
 }
 
+// Matches: public.visa_types
 export interface VisaType {
-  id: string;
-  countryCode: string;
-  code: string;
+  id: string;  // uuid PK
+  country_code: string | null;  // FK to destination_countries.code
+  code: string;  // unique
   title: string;
-  description: string;
-  isActive: boolean;
+  description: string | null;
+  is_active: boolean;
 }
 
+// Matches: public.checklists
 export interface Checklist {
-  id: string;
-  visaTypeCode: string;
-  countryCode: string;
+  id: string;  // uuid PK
+  visa_type: string;  // FK to visa_types.code
   title: string;
-  sortOrder: number;
-  subscriptionTier: 'free' | 'basic' | 'standard' | 'premium';
+  sort_order: number;
+  country_code: string | null;  // FK to destination_countries.code
+  subscription_tier: 'free' | 'basic' | 'standard' | 'premium';
 }
 
+// Matches: public.checklist_items
 export interface ChecklistItem {
-  id: string;
-  checklistId: string;
+  id: string;  // uuid PK
+  checklist_id: string | null;  // FK to checklists.id
   label: string;
-  fieldType: 'checkbox' | 'text' | 'file' | 'date' | 'select';
-  sortOrder: number;
+  field_type: string;
   metadata: Record<string, unknown>;
+  sort_order: number;
 }
 
 export const mockUsers: User[] = [
@@ -84,41 +88,41 @@ export const mockDashboardStats: DashboardStats = {
 };
 
 export const mockCountries: Country[] = [
-  { code: 'US', name: 'United States', isActive: true },
-  { code: 'UK', name: 'United Kingdom', isActive: true },
-  { code: 'DE', name: 'Germany', isActive: true },
-  { code: 'CA', name: 'Canada', isActive: true },
-  { code: 'AU', name: 'Australia', isActive: true },
-  { code: 'FR', name: 'France', isActive: false },
+  { code: 'US', name: 'United States', is_active: true },
+  { code: 'UK', name: 'United Kingdom', is_active: true },
+  { code: 'DE', name: 'Germany', is_active: true },
+  { code: 'CA', name: 'Canada', is_active: true },
+  { code: 'AU', name: 'Australia', is_active: true },
+  { code: 'FR', name: 'France', is_active: false },
 ];
 
 export const mockVisaTypes: VisaType[] = [
-  { id: '1', countryCode: 'US', code: 'F1', title: 'F-1 Student Visa', description: 'For academic studies at US institutions', isActive: true },
-  { id: '2', countryCode: 'US', code: 'J1', title: 'J-1 Exchange Visitor', description: 'For exchange programs', isActive: true },
-  { id: '3', countryCode: 'UK', code: 'TIER4', title: 'Student Visa (Tier 4)', description: 'For studying in the UK', isActive: true },
-  { id: '4', countryCode: 'DE', code: 'STUDY', title: 'German Student Visa', description: 'For studying in Germany', isActive: true },
-  { id: '5', countryCode: 'CA', code: 'STUDY_PERMIT', title: 'Study Permit', description: 'For studying in Canada', isActive: true },
-  { id: '6', countryCode: 'AU', code: 'SUBCLASS_500', title: 'Student Visa (Subclass 500)', description: 'For studying in Australia', isActive: false },
+  { id: '1', country_code: 'US', code: 'F1', title: 'F-1 Student Visa', description: 'For academic studies at US institutions', is_active: true },
+  { id: '2', country_code: 'US', code: 'J1', title: 'J-1 Exchange Visitor', description: 'For exchange programs', is_active: true },
+  { id: '3', country_code: 'UK', code: 'TIER4', title: 'Student Visa (Tier 4)', description: 'For studying in the UK', is_active: true },
+  { id: '4', country_code: 'DE', code: 'STUDY', title: 'German Student Visa', description: 'For studying in Germany', is_active: true },
+  { id: '5', country_code: 'CA', code: 'STUDY_PERMIT', title: 'Study Permit', description: 'For studying in Canada', is_active: true },
+  { id: '6', country_code: 'AU', code: 'SUBCLASS_500', title: 'Student Visa (Subclass 500)', description: 'For studying in Australia', is_active: false },
 ];
 
 export const mockChecklists: Checklist[] = [
-  { id: '1', visaTypeCode: 'F1', countryCode: 'US', title: 'Pre-Application Documents', sortOrder: 1, subscriptionTier: 'free' },
-  { id: '2', visaTypeCode: 'F1', countryCode: 'US', title: 'Financial Documents', sortOrder: 2, subscriptionTier: 'basic' },
-  { id: '3', visaTypeCode: 'F1', countryCode: 'US', title: 'Interview Preparation', sortOrder: 3, subscriptionTier: 'premium' },
-  { id: '4', visaTypeCode: 'TIER4', countryCode: 'UK', title: 'UK Visa Application', sortOrder: 1, subscriptionTier: 'free' },
-  { id: '5', visaTypeCode: 'STUDY', countryCode: 'DE', title: 'German Visa Documents', sortOrder: 1, subscriptionTier: 'free' },
+  { id: '1', visa_type: 'F1', country_code: 'US', title: 'Pre-Application Documents', sort_order: 1, subscription_tier: 'free' },
+  { id: '2', visa_type: 'F1', country_code: 'US', title: 'Financial Documents', sort_order: 2, subscription_tier: 'basic' },
+  { id: '3', visa_type: 'F1', country_code: 'US', title: 'Interview Preparation', sort_order: 3, subscription_tier: 'premium' },
+  { id: '4', visa_type: 'TIER4', country_code: 'UK', title: 'UK Visa Application', sort_order: 1, subscription_tier: 'free' },
+  { id: '5', visa_type: 'STUDY', country_code: 'DE', title: 'German Visa Documents', sort_order: 1, subscription_tier: 'free' },
 ];
 
 export const mockChecklistItems: ChecklistItem[] = [
-  { id: '1', checklistId: '1', label: 'Valid Passport', fieldType: 'checkbox', sortOrder: 1, metadata: {} },
-  { id: '2', checklistId: '1', label: 'I-20 Form', fieldType: 'file', sortOrder: 2, metadata: {} },
-  { id: '3', checklistId: '1', label: 'SEVIS Fee Receipt', fieldType: 'file', sortOrder: 3, metadata: {} },
-  { id: '4', checklistId: '1', label: 'DS-160 Confirmation', fieldType: 'file', sortOrder: 4, metadata: {} },
-  { id: '5', checklistId: '2', label: 'Bank Statements (3 months)', fieldType: 'file', sortOrder: 1, metadata: {} },
-  { id: '6', checklistId: '2', label: 'Sponsor Letter', fieldType: 'file', sortOrder: 2, metadata: {} },
-  { id: '7', checklistId: '2', label: 'Scholarship Letter', fieldType: 'file', sortOrder: 3, metadata: {} },
-  { id: '8', checklistId: '3', label: 'Mock Interview Completed', fieldType: 'checkbox', sortOrder: 1, metadata: {} },
-  { id: '9', checklistId: '3', label: 'Common Questions Reviewed', fieldType: 'checkbox', sortOrder: 2, metadata: {} },
-  { id: '10', checklistId: '4', label: 'CAS Letter', fieldType: 'file', sortOrder: 1, metadata: {} },
-  { id: '11', checklistId: '4', label: 'English Proficiency Test', fieldType: 'file', sortOrder: 2, metadata: {} },
+  { id: '1', checklist_id: '1', label: 'Valid Passport', field_type: 'checkbox', sort_order: 1, metadata: {} },
+  { id: '2', checklist_id: '1', label: 'I-20 Form', field_type: 'file', sort_order: 2, metadata: {} },
+  { id: '3', checklist_id: '1', label: 'SEVIS Fee Receipt', field_type: 'file', sort_order: 3, metadata: {} },
+  { id: '4', checklist_id: '1', label: 'DS-160 Confirmation', field_type: 'file', sort_order: 4, metadata: {} },
+  { id: '5', checklist_id: '2', label: 'Bank Statements (3 months)', field_type: 'file', sort_order: 1, metadata: {} },
+  { id: '6', checklist_id: '2', label: 'Sponsor Letter', field_type: 'file', sort_order: 2, metadata: {} },
+  { id: '7', checklist_id: '2', label: 'Scholarship Letter', field_type: 'file', sort_order: 3, metadata: {} },
+  { id: '8', checklist_id: '3', label: 'Mock Interview Completed', field_type: 'checkbox', sort_order: 1, metadata: {} },
+  { id: '9', checklist_id: '3', label: 'Common Questions Reviewed', field_type: 'checkbox', sort_order: 2, metadata: {} },
+  { id: '10', checklist_id: '4', label: 'CAS Letter', field_type: 'file', sort_order: 1, metadata: {} },
+  { id: '11', checklist_id: '4', label: 'English Proficiency Test', field_type: 'file', sort_order: 2, metadata: {} },
 ];

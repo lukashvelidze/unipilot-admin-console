@@ -42,7 +42,7 @@ export default function CountriesPage() {
 
   const toggleActive = (code: string) => {
     setCountries(prev => prev.map(c => 
-      c.code === code ? { ...c, isActive: !c.isActive } : c
+      c.code === code ? { ...c, is_active: !c.is_active } : c
     ));
     toast({ title: 'Status updated' });
   };
@@ -84,7 +84,7 @@ export default function CountriesPage() {
         id: formData.code.toUpperCase(),
         code: formData.code.toUpperCase(),
         name: formData.name,
-        isActive: true,
+        is_active: true,
       };
       setCountries(prev => [...prev, newCountry]);
       toast({ title: 'Country created' });
@@ -96,11 +96,11 @@ export default function CountriesPage() {
     { key: 'code', header: 'Code' },
     { key: 'name', header: 'Country Name' },
     { 
-      key: 'isActive', 
+      key: 'is_active', 
       header: 'Status',
       render: (country: CountryWithId) => (
-        <StatusBadge status={country.isActive ? 'success' : 'default'}>
-          {country.isActive ? 'Active' : 'Inactive'}
+        <StatusBadge status={country.is_active ? 'success' : 'default'}>
+          {country.is_active ? 'Active' : 'Inactive'}
         </StatusBadge>
       )
     },
@@ -121,7 +121,7 @@ export default function CountriesPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toggleActive(country.code)}>
               <Power className="mr-2 h-4 w-4" />
-              {country.isActive ? 'Deactivate' : 'Activate'}
+              {country.is_active ? 'Deactivate' : 'Activate'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(country.code)}>
