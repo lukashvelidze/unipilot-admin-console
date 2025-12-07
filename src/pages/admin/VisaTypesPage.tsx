@@ -36,7 +36,12 @@ export default function VisaTypesPage() {
   const [visaTypes, setVisaTypes] = useState(mockVisaTypes);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingVisa, setEditingVisa] = useState<VisaType | null>(null);
-  const [formData, setFormData] = useState({ countryCode: '', code: '', title: '', description: '' });
+  const [formData, setFormData] = useState({ 
+    country_code: '', 
+    code: '', 
+    title: '', 
+    description: '' 
+  });
   const { toast } = useToast();
   
   const filteredVisaTypes = visaTypes.filter(visa =>
@@ -46,7 +51,7 @@ export default function VisaTypesPage() {
 
   const toggleActive = (id: string) => {
     setVisaTypes(prev => prev.map(v => 
-      v.id === id ? { ...v, isActive: !v.isActive } : v
+      v.id === id ? { ...v, is_active: !v.is_active } : v
     ));
     toast({ title: 'Status updated' });
   };
@@ -58,32 +63,46 @@ export default function VisaTypesPage() {
 
   const openCreateDialog = () => {
     setEditingVisa(null);
-    setFormData({ countryCode: '', code: '', title: '', description: '' });
+    setFormData({ country_code: '', code: '', title: '', description: '' });
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (visa: VisaType) => {
     setEditingVisa(visa);
-    setFormData({ countryCode: visa.countryCode, code: visa.code, title: visa.title, description: visa.description });
+    setFormData({ 
+      country_code: visa.country_code || '', 
+      code: visa.code, 
+      title: visa.title, 
+      description: visa.description || '' 
+    });
     setIsDialogOpen(true);
   };
 
   const handleSubmit = () => {
-    if (!formData.countryCode || !formData.code || !formData.title) {
+    if (!formData.country_code || !formData.code || !formData.title) {
       toast({ title: 'Please fill all required fields', variant: 'destructive' });
       return;
     }
 
     if (editingVisa) {
       setVisaTypes(prev => prev.map(v => 
-        v.id === editingVisa.id ? { ...v, ...formData } : v
+        v.id === editingVisa.id ? { 
+          ...v, 
+          country_code: formData.country_code,
+          code: formData.code,
+          title: formData.title,
+          description: formData.description || null
+        } : v
       ));
       toast({ title: 'Visa type updated' });
     } else {
       const newVisa: VisaType = {
-        id: Date.now().toString(),
-        ...formData,
-        isActive: true,
+        id: crypto.randomUUID(),
+        country_code: formData.country_code,
+        code: formData.code,
+        title: formData.title,
+        description: formData.description || null,
+        is_active: true,
       };
       setVisaTypes(prev => [...prev, newVisa]);
       toast({ title: 'Visa type created' });
@@ -91,22 +110,31 @@ export default function VisaTypesPage() {
     setIsDialogOpen(false);
   };
 
-  const getCountryName = (code: string) => mockCountries.find(c => c.code === code)?.name || code;
+  const getCountryName = (code: string | null) => mockCountries.find(c => c.code === code)?.name || code || '-';
 
   const columns = [
     { key: 'code', header: 'Code' },
     { key: 'title', header: 'Title' },
     { 
-      key: 'countryCode', 
+      key: 'country_code', 
       header: 'Country',
-      render: (visa: VisaType) => getCountryName(visa.countryCode)
+      render: (visa: VisaType) => getCountryName(visa.country_code)
     },
     { 
-      key: 'isActive', 
+      key: 'description', 
+      header: 'Description',
+      render: (visa: VisaType) => (
+        <span className="text-muted-foreground truncate max-w-[200px] block">
+          {visa.description || '-'}
+        </span>
+      )
+    },
+    { 
+      key: 'is_active', 
       header: 'Status',
       render: (visa: VisaType) => (
-        <StatusBadge status={visa.isActive ? 'success' : 'default'}>
-          {visa.isActive ? 'Active' : 'Inactive'}
+        <StatusBadge status={visa.is_active ? 'success' : 'default'}>
+          {visa.is_active ? 'Active' : 'Inactive'}
         </StatusBadge>
       )
     },
@@ -127,7 +155,7 @@ export default function VisaTypesPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toggleActive(visa.id)}>
               <Power className="mr-2 h-4 w-4" />
-              {visa.isActive ? 'Deactivate' : 'Activate'}
+              {visa.is_active ? 'Deactivate' : 'Activate'}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(visa.id)}>
@@ -177,12 +205,12 @@ export default function VisaTypesPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Country *</Label>
-              <Select value={formData.countryCode} onValueChange={(v) => setFormData(f => ({ ...f, countryCode: v }))}>
+              <Select value={formData.country_code} onValueChange={(v) => setFormData(f => ({ ...f, country_code: v }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockCountries.filter(c => c.isActive).map(country => (
+                  {mockCountries.filter(c => c.is_active).map(country => (
                     <SelectItem key={country.code} value={country.code}>{country.name}</SelectItem>
                   ))}
                 </SelectContent>

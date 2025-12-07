@@ -53,12 +53,12 @@ export default function Dashboard() {
           />
           <StatsCard
             title="Countries"
-            value={mockCountries.filter(c => c.isActive).length}
+            value={mockCountries.filter(c => c.is_active).length}
             icon={<Globe className="h-5 w-5 text-primary" />}
           />
           <StatsCard
             title="Visa Types"
-            value={mockVisaTypes.filter(v => v.isActive).length}
+            value={mockVisaTypes.filter(v => v.is_active).length}
             icon={<Stamp className="h-5 w-5 text-primary" />}
           />
           <StatsCard
