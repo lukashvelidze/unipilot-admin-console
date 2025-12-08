@@ -160,7 +160,7 @@ export function PrivacyPage() {
               If you have any questions about this Privacy Policy or our data practices, please contact us at:
             </p>
             <p className="text-muted-foreground">
-              Email: privacy@unipilot.com
+              Email: unipilotapp@gmail.com
             </p>
           </section>
         </div>
