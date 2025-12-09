@@ -13,7 +13,7 @@ export function PublicFooter() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <span className="text-sm font-bold text-primary-foreground">U</span>
               </div>
-              <span className="text-lg font-semibold">UniPilot</span>
+              <span className="text-lg font-semibold">UniPilot Everywhere</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-md">
               Your trusted companion for navigating the student visa journey.
@@ -57,7 +57,7 @@ export function PublicFooter() {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} UniPilot. All rights reserved.</p>
+          <p>&copy; {currentYear} UniPilot Everywhere. All rights reserved.</p>
         </div>
       </div>
     </footer>

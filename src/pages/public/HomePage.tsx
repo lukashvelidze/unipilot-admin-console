@@ -43,9 +43,11 @@ export function HomePage() {
               From document checklists to deadline tracking, we've got you covered.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-base">
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="text-base" asChild>
+                <a href="https://testflight.apple.com/join/13bcqnX4" target="_blank" rel="noopener noreferrer">
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
               </Button>
               <Button size="lg" variant="outline" className="text-base" asChild>
                 <Link to="/faqs">Learn More</Link>
@@ -137,9 +139,11 @@ export function HomePage() {
           <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto">
             Join thousands of students who have successfully navigated their visa applications with UniPilot.
           </p>
-          <Button size="lg" variant="secondary" className="text-base">
-            Get Started Today
-            <ArrowRight className="ml-2 h-5 w-5" />
+          <Button size="lg" variant="secondary" className="text-base" asChild>
+            <a href="https://testflight.apple.com/join/13bcqnX4" target="_blank" rel="noopener noreferrer">
+              Get Started Today
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </a>
           </Button>
         </div>
       </section>

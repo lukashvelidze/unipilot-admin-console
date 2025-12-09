@@ -44,7 +44,7 @@ const faqs = [
   {
     question: 'How can I contact support?',
     answer:
-      'You can reach our support team through the contact form on our website or by emailing support@unipilot.com. Premium users have access to priority support with faster response times.',
+      'You can reach our support team through the contact form on our website or by emailing unipilotapp@gmail.com. Premium users have access to priority support with faster response times.',
   },
   {
     question: 'Is my personal information secure?',
@@ -96,7 +96,7 @@ export function FAQsPage() {
             Can't find what you're looking for? We're here to help.
           </p>
           <a
-            href="mailto:support@unipilot.com"
+            href="mailto:unipilotapp@gmail.com"
             className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
           >
             Contact Support

@@ -23,7 +23,7 @@ export function PublicNavbar() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <span className="text-base font-bold text-primary-foreground">U</span>
             </div>
-            <span className="text-xl font-semibold">UniPilot</span>
+            <span className="text-xl font-semibold">UniPilot Everywhere</span>
           </Link>
 
           {/* Desktop Navigation */}
