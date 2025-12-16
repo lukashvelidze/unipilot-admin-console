@@ -10,6 +10,7 @@ import {
   Stamp,
   Settings,
   LogOut,
+  FileText,
 } from 'lucide-react';
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { icon: Globe, label: 'Countries', href: '/admin/countries' },
   { icon: Stamp, label: 'Visa Types', href: '/admin/visa-types' },
   { icon: CheckSquare, label: 'Checklists', href: '/admin/checklists' },
+  { icon: FileText, label: 'Articles', href: '/admin/articles' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
 

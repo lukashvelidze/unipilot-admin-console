@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { StatusBadge } from '@/components/admin/StatusBadge';
-import { Checklist, ChecklistItem, VisaType, Country } from '@/data/mockData';
+import { Checklist, ChecklistItem, VisaType, Country, Article } from '@/data/mockData';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Plus, ChevronRight, ChevronDown, Edit, Trash2, Loader2, Filter, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, Plus, ChevronRight, ChevronDown, Edit, Trash2, Loader2, Filter, ArrowUp, ArrowDown, FileText } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,7 @@ export default function ChecklistsPage() {
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [visaTypes, setVisaTypes] = useState<VisaType[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedChecklists, setExpandedChecklists] = useState<Set<string>>(new Set());
 
@@ -53,7 +54,8 @@ export default function ChecklistsPage() {
     label: '',
     field_type: 'checkbox',
     sort_order: 0,
-    metadata: '{}'
+    metadata: '{}',
+    article_id: '',
   });
   const [submittingItem, setSubmittingItem] = useState(false);
 
@@ -65,11 +67,12 @@ export default function ChecklistsPage() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [checklistRes, itemsRes, visaRes, countryRes] = await Promise.all([
+    const [checklistRes, itemsRes, visaRes, countryRes, articlesRes] = await Promise.all([
       supabase.from('checklists').select('*').order('sort_order'),
       supabase.from('checklist_items').select('*').order('sort_order'),
       supabase.from('visa_types').select('*').eq('is_active', true).order('title'),
-      supabase.from('destination_countries').select('*').eq('is_active', true).order('name')
+      supabase.from('destination_countries').select('*').eq('is_active', true).order('name'),
+      supabase.from('articles').select('*').eq('published', true).order('title')
     ]);
 
     if (checklistRes.error) {
@@ -94,6 +97,12 @@ export default function ChecklistsPage() {
       toast({ title: 'Error loading countries', description: countryRes.error.message, variant: 'destructive' });
     } else {
       setCountries(countryRes.data || []);
+    }
+
+    if (articlesRes.error) {
+      toast({ title: 'Error loading articles', description: articlesRes.error.message, variant: 'destructive' });
+    } else {
+      setArticles(articlesRes.data || []);
     }
 
     setLoading(false);
@@ -128,6 +137,11 @@ export default function ChecklistsPage() {
 
   const getVisaTitle = (code: string) => visaTypes.find(v => v.code === code)?.title || code;
   const getCountryName = (code: string) => countries.find(c => c.code === code)?.name || code;
+  const getArticleTitle = (id: string | null | undefined) => {
+    if (!id) return '';
+    const article = articles.find(a => a.id === id);
+    return article ? article.title : 'Article unavailable';
+  };
 
   // Checklist CRUD
   const openChecklistDialog = (checklist?: Checklist) => {
@@ -231,11 +245,12 @@ export default function ChecklistsPage() {
         label: item.label,
         field_type: item.field_type,
         sort_order: item.sort_order,
-        metadata: JSON.stringify(item.metadata, null, 2)
+        metadata: JSON.stringify(item.metadata, null, 2),
+        article_id: item.article_id || '',
       });
     } else {
       setEditingItem(null);
-      setItemForm({ label: '', field_type: 'checkbox', sort_order: 0, metadata: '{}' });
+      setItemForm({ label: '', field_type: 'checkbox', sort_order: 0, metadata: '{}', article_id: '' });
     }
     setIsItemDialogOpen(true);
   };
@@ -263,7 +278,8 @@ export default function ChecklistsPage() {
           label: itemForm.label,
           field_type: itemForm.field_type,
           sort_order: itemForm.sort_order,
-          metadata: parsedMetadata
+          metadata: parsedMetadata,
+          article_id: itemForm.article_id || null,
         })
         .eq('id', editingItem.id);
 
@@ -276,7 +292,8 @@ export default function ChecklistsPage() {
             label: itemForm.label,
             field_type: itemForm.field_type,
             sort_order: itemForm.sort_order,
-            metadata: parsedMetadata
+            metadata: parsedMetadata,
+            article_id: itemForm.article_id || null,
           } : i
         ));
         toast({ title: 'Item updated' });
@@ -291,6 +308,7 @@ export default function ChecklistsPage() {
           field_type: itemForm.field_type,
           sort_order: getItemsForChecklist(currentChecklistId).length + 1,
           metadata: parsedMetadata,
+          article_id: itemForm.article_id || null,
         })
         .select()
         .single();
@@ -482,10 +500,15 @@ export default function ChecklistsPage() {
                             <span className="text-xs text-muted-foreground w-6 text-center">{index + 1}</span>
                             <div className="flex-1">
                               <p className="text-sm font-medium text-foreground">{item.label}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Type: {item.field_type}
-                                {Object.keys(item.metadata).length > 0 && ` • Has metadata`}
-                              </p>
+                              {Object.keys(item.metadata).length > 0 && (
+                                <p className="text-xs text-muted-foreground">Has metadata</p>
+                              )}
+                              {item.article_id && (
+                                <p className="text-xs text-primary flex items-center gap-1 mt-0.5">
+                                  <FileText className="h-3 w-3" />
+                                  {getArticleTitle(item.article_id)}
+                                </p>
+                              )}
                             </div>
                             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openItemDialog(checklist.id, item)}>
                               <Edit className="h-3.5 w-3.5" />
@@ -613,22 +636,27 @@ export default function ChecklistsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Field Type</Label>
+              <Label>Linked Article</Label>
               <Select
-                value={itemForm.field_type}
-                onValueChange={(v) => setItemForm(f => ({ ...f, field_type: v }))}
+                value={itemForm.article_id}
+                onValueChange={(v) => setItemForm(f => ({ ...f, article_id: v }))}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="No article" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="checkbox">Checkbox</SelectItem>
-                  <SelectItem value="text">Text Input</SelectItem>
-                  <SelectItem value="file">File Upload</SelectItem>
-                  <SelectItem value="date">Date Picker</SelectItem>
-                  <SelectItem value="select">Dropdown Select</SelectItem>
+                  <SelectItem value="">No article</SelectItem>
+                  {articles.map(article => (
+                    <SelectItem key={article.id} value={article.id}>
+                      {article.title}
+                    </SelectItem>
+                  ))}
+                  {editingItem?.article_id && itemForm.article_id === editingItem.article_id && !articles.find(a => a.id === editingItem.article_id) && (
+                    <SelectItem value={editingItem.article_id}>Linked article (unpublished)</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">Only published articles can be linked.</p>
             </div>
             <div className="space-y-2">
               <Label>Metadata (JSON)</Label>

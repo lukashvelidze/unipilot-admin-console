@@ -19,6 +19,7 @@ import CountriesPage from "./pages/admin/CountriesPage";
 import VisaTypesPage from "./pages/admin/VisaTypesPage";
 import ChecklistsPage from "./pages/admin/ChecklistsPage";
 import PlaceholderPage from "./pages/admin/PlaceholderPage";
+import ArticlesPage from "./pages/admin/ArticlesPage";
 
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/admin/countries" element={<CountriesPage />} />
           <Route path="/admin/visa-types" element={<VisaTypesPage />} />
           <Route path="/admin/checklists" element={<ChecklistsPage />} />
+          <Route path="/admin/articles" element={<ArticlesPage />} />
           <Route path="/admin/settings" element={<PlaceholderPage title="Settings" description="Configure admin panel settings" />} />
 
           {/* 404 */}
