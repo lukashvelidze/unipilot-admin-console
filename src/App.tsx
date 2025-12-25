@@ -11,6 +11,8 @@ import { FAQsPage } from "./pages/public/FAQsPage";
 import { TermsPage } from "./pages/public/TermsPage";
 import { PrivacyPage } from "./pages/public/PrivacyPage";
 import { LoginPage } from "./pages/public/LoginPage";
+import { ArticlesFeedPage } from "./pages/public/ArticlesFeedPage";
+import { ArticleDetailPage } from "./pages/public/ArticleDetailPage";
 
 // Admin pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -20,7 +22,9 @@ import VisaTypesPage from "./pages/admin/VisaTypesPage";
 import ChecklistsPage from "./pages/admin/ChecklistsPage";
 import PlaceholderPage from "./pages/admin/PlaceholderPage";
 import ArticlesPage from "./pages/admin/ArticlesPage";
-
+import ArticleCreatePage from "./pages/admin/ArticleCreatePage";
+import ArticleEditPage from "./pages/admin/ArticleEditPage";
+import ArticleCategoriesPage from "./pages/admin/ArticleCategoriesPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +43,8 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/articles" element={<ArticlesFeedPage />} />
+            <Route path="/articles/:slug" element={<ArticleDetailPage />} />
           </Route>
 
           {/* Admin routes */}
@@ -47,7 +53,10 @@ const App = () => (
           <Route path="/admin/countries" element={<CountriesPage />} />
           <Route path="/admin/visa-types" element={<VisaTypesPage />} />
           <Route path="/admin/checklists" element={<ChecklistsPage />} />
+          <Route path="/admin/article-categories" element={<ArticleCategoriesPage />} />
           <Route path="/admin/articles" element={<ArticlesPage />} />
+          <Route path="/admin/articles/new" element={<ArticleCreatePage />} />
+          <Route path="/admin/articles/:slug" element={<ArticleEditPage />} />
           <Route path="/admin/settings" element={<PlaceholderPage title="Settings" description="Configure admin panel settings" />} />
 
           {/* 404 */}

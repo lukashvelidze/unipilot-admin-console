@@ -11,7 +11,6 @@ interface DashboardStats {
   totalCountries: number;
   totalVisaTypes: number;
   totalChecklists: number;
-  totalArticles: number;
 }
 
 interface RecentProfile {
@@ -27,7 +26,6 @@ export default function Dashboard() {
     totalCountries: 0,
     totalVisaTypes: 0,
     totalChecklists: 0,
-    totalArticles: 0,
   });
   const [recentProfiles, setRecentProfiles] = useState<RecentProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,11 +37,10 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
 
-    const [countriesRes, visaTypesRes, checklistsRes, articlesRes, profilesRes] = await Promise.all([
+    const [countriesRes, visaTypesRes, checklistsRes, profilesRes] = await Promise.all([
       supabase.from('destination_countries').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('visa_types').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('checklists').select('*', { count: 'exact', head: true }),
-      supabase.from('articles').select('*', { count: 'exact', head: true }),
       supabase.from('profiles').select('id, full_name, email, subscription_tier, created_at').order('created_at', { ascending: false }).limit(5)
     ]);
 
@@ -51,7 +48,6 @@ export default function Dashboard() {
       totalCountries: countriesRes.count || 0,
       totalVisaTypes: visaTypesRes.count || 0,
       totalChecklists: checklistsRes.count || 0,
-      totalArticles: articlesRes.count || 0,
     });
 
     setRecentProfiles(profilesRes.data || []);
@@ -119,11 +115,6 @@ export default function Dashboard() {
             value={stats.totalChecklists}
             icon={<CheckSquare className="h-5 w-5 text-primary" />}
           />
-          <StatsCard
-            title="Articles"
-            value={stats.totalArticles}
-            icon={<FileText className="h-5 w-5 text-primary" />}
-          />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -146,16 +137,6 @@ export default function Dashboard() {
             </div>
             <div className="grid gap-3">
               <Link
-                to="/admin/articles"
-                className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent transition-colors"
-              >
-                <FileText className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="font-medium text-foreground">Manage Articles</p>
-                  <p className="text-sm text-muted-foreground">Create, publish, or edit help content</p>
-                </div>
-              </Link>
-              <Link
                 to="/admin/checklists"
                 className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent transition-colors"
               >
@@ -173,6 +154,16 @@ export default function Dashboard() {
                 <div>
                   <p className="font-medium text-foreground">Manage Visa Types</p>
                   <p className="text-sm text-muted-foreground">Configure visa types per country</p>
+                </div>
+              </Link>
+              <Link
+                to="/admin/articles"
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent transition-colors"
+              >
+                <FileText className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">Manage Articles</p>
+                  <p className="text-sm text-muted-foreground">Create, edit, and publish guidance</p>
                 </div>
               </Link>
               <Link

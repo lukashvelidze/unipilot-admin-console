@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   FileText,
+  Tags,
 } from 'lucide-react';
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { icon: Stamp, label: 'Visa Types', href: '/admin/visa-types' },
   { icon: CheckSquare, label: 'Checklists', href: '/admin/checklists' },
   { icon: FileText, label: 'Articles', href: '/admin/articles' },
+  { icon: Tags, label: 'Article Categories', href: '/admin/article-categories' },
   { icon: Settings, label: 'Settings', href: '/admin/settings' },
 ];
 

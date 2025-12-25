@@ -68,26 +68,6 @@ export interface ChecklistItem {
   field_type: string;
   metadata: Record<string, unknown>;
   sort_order: number;
-  article_id?: string | null;
-}
-
-// Matches: public.articles
-export interface Article {
-  id: string; // uuid PK
-  slug: string;
-  help_route: string;
-  title: string;
-  summary: string | null;
-  content: string;
-  destination_country_code: string | null;
-  origin_country_code: string | null;
-  visa_types: string[] | null;
-  is_global: boolean;
-  access_tier: 'free' | 'standard' | 'premium';
-  published: boolean;
-  reading_time_minutes: number | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export const mockUsers: User[] = [
@@ -134,15 +114,15 @@ export const mockChecklists: Checklist[] = [
 ];
 
 export const mockChecklistItems: ChecklistItem[] = [
-  { id: '1', checklist_id: '1', label: 'Valid Passport', field_type: 'checkbox', sort_order: 1, metadata: {}, article_id: null },
-  { id: '2', checklist_id: '1', label: 'I-20 Form', field_type: 'file', sort_order: 2, metadata: {}, article_id: null },
-  { id: '3', checklist_id: '1', label: 'SEVIS Fee Receipt', field_type: 'file', sort_order: 3, metadata: {}, article_id: null },
-  { id: '4', checklist_id: '1', label: 'DS-160 Confirmation', field_type: 'file', sort_order: 4, metadata: {}, article_id: null },
-  { id: '5', checklist_id: '2', label: 'Bank Statements (3 months)', field_type: 'file', sort_order: 1, metadata: {}, article_id: null },
-  { id: '6', checklist_id: '2', label: 'Sponsor Letter', field_type: 'file', sort_order: 2, metadata: {}, article_id: null },
-  { id: '7', checklist_id: '2', label: 'Scholarship Letter', field_type: 'file', sort_order: 3, metadata: {}, article_id: null },
-  { id: '8', checklist_id: '3', label: 'Mock Interview Completed', field_type: 'checkbox', sort_order: 1, metadata: {}, article_id: null },
-  { id: '9', checklist_id: '3', label: 'Common Questions Reviewed', field_type: 'checkbox', sort_order: 2, metadata: {}, article_id: null },
-  { id: '10', checklist_id: '4', label: 'CAS Letter', field_type: 'file', sort_order: 1, metadata: {}, article_id: null },
-  { id: '11', checklist_id: '4', label: 'English Proficiency Test', field_type: 'file', sort_order: 2, metadata: {}, article_id: null },
+  { id: '1', checklist_id: '1', label: 'Valid Passport', field_type: 'checkbox', sort_order: 1, metadata: {} },
+  { id: '2', checklist_id: '1', label: 'I-20 Form', field_type: 'file', sort_order: 2, metadata: {} },
+  { id: '3', checklist_id: '1', label: 'SEVIS Fee Receipt', field_type: 'file', sort_order: 3, metadata: {} },
+  { id: '4', checklist_id: '1', label: 'DS-160 Confirmation', field_type: 'file', sort_order: 4, metadata: {} },
+  { id: '5', checklist_id: '2', label: 'Bank Statements (3 months)', field_type: 'file', sort_order: 1, metadata: {} },
+  { id: '6', checklist_id: '2', label: 'Sponsor Letter', field_type: 'file', sort_order: 2, metadata: {} },
+  { id: '7', checklist_id: '2', label: 'Scholarship Letter', field_type: 'file', sort_order: 3, metadata: {} },
+  { id: '8', checklist_id: '3', label: 'Mock Interview Completed', field_type: 'checkbox', sort_order: 1, metadata: {} },
+  { id: '9', checklist_id: '3', label: 'Common Questions Reviewed', field_type: 'checkbox', sort_order: 2, metadata: {} },
+  { id: '10', checklist_id: '4', label: 'CAS Letter', field_type: 'file', sort_order: 1, metadata: {} },
+  { id: '11', checklist_id: '4', label: 'English Proficiency Test', field_type: 'file', sort_order: 2, metadata: {} },
 ];

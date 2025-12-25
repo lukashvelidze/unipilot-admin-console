@@ -29,21 +29,22 @@ type CountryWithId = Country & { id: string };
 export default function CountriesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [countries, setCountries] = useState<CountryWithId[]>([]);
+  const [countryType, setCountryType] = useState<'destination' | 'origin'>('destination');
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCountry, setEditingCountry] = useState<CountryWithId | null>(null);
-  const [formData, setFormData] = useState({ code: '', name: '' });
+  const [formData, setFormData] = useState({ code: '', name: '', type: 'destination' as 'destination' | 'origin' });
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchCountries();
-  }, []);
+  }, [countryType]);
 
   const fetchCountries = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('destination_countries')
+      .from(countryType === 'destination' ? 'destination_countries' : 'origin_countries')
       .select('*')
       .order('name');
 
@@ -65,7 +66,7 @@ export default function CountriesPage() {
     if (!country) return;
 
     const { error } = await supabase
-      .from('destination_countries')
+      .from(countryType === 'destination' ? 'destination_countries' : 'origin_countries')
       .update({ is_active: !country.is_active })
       .eq('code', code);
 
@@ -81,7 +82,7 @@ export default function CountriesPage() {
 
   const handleDelete = async (code: string) => {
     const { error } = await supabase
-      .from('destination_countries')
+      .from(countryType === 'destination' ? 'destination_countries' : 'origin_countries')
       .delete()
       .eq('code', code);
 
@@ -95,13 +96,13 @@ export default function CountriesPage() {
 
   const openCreateDialog = () => {
     setEditingCountry(null);
-    setFormData({ code: '', name: '' });
+    setFormData({ code: '', name: '', type: countryType });
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (country: CountryWithId) => {
     setEditingCountry(country);
-    setFormData({ code: country.code, name: country.name });
+    setFormData({ code: country.code, name: country.name, type: countryType });
     setIsDialogOpen(true);
   };
 
@@ -115,7 +116,7 @@ export default function CountriesPage() {
 
     if (editingCountry) {
       const { error } = await supabase
-        .from('destination_countries')
+        .from(formData.type === 'destination' ? 'destination_countries' : 'origin_countries')
         .update({ name: formData.name })
         .eq('code', editingCountry.code);
 
@@ -130,7 +131,7 @@ export default function CountriesPage() {
       }
     } else {
       const { error } = await supabase
-        .from('destination_countries')
+        .from(formData.type === 'destination' ? 'destination_countries' : 'origin_countries')
         .insert({
           code: formData.code.toUpperCase(),
           name: formData.name,
@@ -146,7 +147,9 @@ export default function CountriesPage() {
           name: formData.name,
           is_active: true,
         };
-        setCountries(prev => [...prev, newCountry]);
+        if (formData.type === countryType) {
+          setCountries(prev => [...prev, newCountry]);
+        }
         toast({ title: 'Country created' });
         setIsDialogOpen(false);
       }
@@ -202,7 +205,7 @@ export default function CountriesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Countries</h1>
-            <p className="text-muted-foreground">Manage destination countries</p>
+            <p className="text-muted-foreground">Manage destination and origin countries separately.</p>
           </div>
           <Button onClick={openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" />
@@ -211,6 +214,22 @@ export default function CountriesPage() {
         </div>
 
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-1">
+            <Button
+              variant={countryType === 'destination' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setCountryType('destination')}
+            >
+              Destinations
+            </Button>
+            <Button
+              variant={countryType === 'origin' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setCountryType('origin')}
+            >
+              Origins
+            </Button>
+          </div>
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -237,25 +256,49 @@ export default function CountriesPage() {
             <DialogTitle>{editingCountry ? 'Edit Country' : 'Add Country'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Country Code *</Label>
-              <Input
-                value={formData.code}
-                onChange={(e) => setFormData(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+          <div className="space-y-2">
+            <Label>Country Code *</Label>
+            <Input
+              value={formData.code}
+              onChange={(e) => setFormData(f => ({ ...f, code: e.target.value.toUpperCase() }))}
                 placeholder="e.g., US, UK, DE"
                 maxLength={3}
                 disabled={!!editingCountry}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Country Name *</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
-                placeholder="e.g., United States"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label>Country Name *</Label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData(f => ({ ...f, name: e.target.value }))}
+              placeholder="e.g., United States"
+            />
           </div>
+          <div className="space-y-2">
+            <Label>Country Type *</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+              variant={formData.type === 'destination' ? 'secondary' : 'outline'}
+              onClick={() => setFormData(f => ({ ...f, type: 'destination' }))}
+              disabled={!!editingCountry}
+            >
+              Destination
+            </Button>
+            <Button
+              type="button"
+              variant={formData.type === 'origin' ? 'secondary' : 'outline'}
+              onClick={() => setFormData(f => ({ ...f, type: 'origin' }))}
+              disabled={!!editingCountry}
+            >
+              Origin
+            </Button>
+            </div>
+            {editingCountry && (
+              <p className="text-xs text-muted-foreground">Type is fixed for existing entries.</p>
+            )}
+          </div>
+        </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={submitting}>

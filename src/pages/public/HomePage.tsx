@@ -35,7 +35,7 @@ export function HomePage() {
         <div className="container mx-auto px-4 relative">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              Your Student Visa Journey,{' '}
+              For your Student Visa Journey,{' '}
               <span className="text-primary">Simplified</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
