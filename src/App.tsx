@@ -9,7 +9,6 @@ import { PublicLayout } from "./components/public/PublicLayout";
 import { HomePage } from "./pages/public/HomePage";
 import { FAQsPage } from "./pages/public/FAQsPage";
 import { TermsPage } from "./pages/public/TermsPage";
-import { PrivacyPage } from "./pages/public/PrivacyPage";
 import { LoginPage } from "./pages/public/LoginPage";
 import { ArticlesFeedPage } from "./pages/public/ArticlesFeedPage";
 import { ArticleDetailPage } from "./pages/public/ArticleDetailPage";
@@ -41,7 +40,6 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/faqs" element={<FAQsPage />} />
             <Route path="/terms" element={<TermsPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/articles" element={<ArticlesFeedPage />} />
             <Route path="/articles/:slug" element={<ArticleDetailPage />} />

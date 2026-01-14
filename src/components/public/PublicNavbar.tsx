@@ -8,7 +8,7 @@ const navItems = [
   { label: 'Articles', href: '/articles' },
   { label: 'FAQs', href: '/faqs' },
   { label: 'Terms & Conditions', href: '/terms' },
-  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Privacy Policy', href: 'https://unipilot.app/privacy', external: true },
 ];
 
 export function PublicNavbar() {
@@ -31,15 +31,16 @@ export function PublicNavbar() {
           <nav className="hidden md:flex items-center gap-6">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    'text-sm font-medium transition-colors hover:text-primary',
-                    isActive ? 'text-primary' : 'text-muted-foreground'
-                  )}
-                >
+              const className = cn(
+                'text-sm font-medium transition-colors hover:text-primary',
+                isActive ? 'text-primary' : 'text-muted-foreground'
+              );
+              return item.external ? (
+                <a key={item.href} href={item.href} className={className}>
+                  {item.label}
+                </a>
+              ) : (
+                <Link key={item.href} to={item.href} className={className}>
                   {item.label}
                 </Link>
               );
@@ -76,17 +77,27 @@ export function PublicNavbar() {
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
-                return (
+                const className = cn(
+                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                );
+                return item.external ? (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={className}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
                   <Link
                     key={item.href}
                     to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={cn(
-                      'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                      isActive
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    )}
+                    className={className}
                   >
                     {item.label}
                   </Link>

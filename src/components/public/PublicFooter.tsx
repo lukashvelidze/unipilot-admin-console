@@ -48,9 +48,9 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="https://unipilot.app/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
                   Privacy Policy
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
