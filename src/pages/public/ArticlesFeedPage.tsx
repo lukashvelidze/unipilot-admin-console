@@ -36,7 +36,12 @@ export function ArticlesFeedPage() {
     const fetchData = async () => {
       setLoading(true);
       const [articlesRes, destRes, originRes, visaRes, categoriesRes, mapRes] = await Promise.all([
-        supabase.from('articles').select('*').eq('published', true).order('updated_at', { ascending: false }),
+        supabase
+          .from('articles')
+          .select('*')
+          .eq('published', true)
+          .eq('access_tier', 'free')
+          .order('updated_at', { ascending: false }),
         supabase.from('destination_countries').select('*').eq('is_active', true).order('name'),
         supabase.from('origin_countries').select('*').eq('is_active', true).order('name'),
         supabase.from('visa_types').select('*').eq('is_active', true).order('title'),
@@ -94,7 +99,7 @@ export function ArticlesFeedPage() {
           categoryFilter === 'all' ||
           (articleCategoryMap[article.id] || []).includes(categoryFilter);
 
-        return matchesDestination && matchesOrigin && matchesVisa && matchesCategory;
+        return article.access_tier === 'free' && matchesDestination && matchesOrigin && matchesVisa && matchesCategory;
       }),
     [articles, destinationFilter, originFilter, visaFilter, categoryFilter, articleCategoryMap]
   );

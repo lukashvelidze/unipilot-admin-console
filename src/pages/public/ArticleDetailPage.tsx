@@ -24,7 +24,13 @@ export function ArticleDetailPage() {
       if (!slug) return;
       setLoading(true);
       const [{ data, error: articleError }, destRes, originRes, visaRes, categoriesRes] = await Promise.all([
-        supabase.from('articles').select('*').eq('slug', slug).eq('published', true).single(),
+        supabase
+          .from('articles')
+          .select('*')
+          .eq('slug', slug)
+          .eq('published', true)
+          .eq('access_tier', 'free')
+          .single(),
         supabase.from('destination_countries').select('*').eq('is_active', true).order('name'),
         supabase.from('origin_countries').select('*').eq('is_active', true).order('name'),
         supabase.from('visa_types').select('*').eq('is_active', true).order('title'),
