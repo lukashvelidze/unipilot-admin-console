@@ -11,7 +11,22 @@
     <meta property="og:description" content="UniPilot Everywhere - Your Visa Journey Companion" />
     <meta property="og:type" content="website" />
     <link rel="icon" href="/favicon.ico" />
-    <script type="module" crossorigin src="/assets/index-DP-20Bjg.js"></script>
+    <script>
+      (function () {
+        var l = window.location;
+        if (l.search && l.search[1] === '/') {
+          var decoded = l.search
+            .slice(1)
+            .split('&')
+            .map(function (s) {
+              return s.replace(/~and~/g, '&');
+            })
+            .join('?');
+          window.history.replaceState(null, '', l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-CecQ3lK1.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BUWO25ou.css">
   </head>
 
