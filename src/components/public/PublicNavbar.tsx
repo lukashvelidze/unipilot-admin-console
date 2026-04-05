@@ -18,13 +18,17 @@ export function PublicNavbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-18 items-center justify-between gap-3 py-3 md:h-16 md:py-0">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <span className="text-base font-bold text-primary-foreground">U</span>
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            <img src="/favicon.png" alt="UniPilot logo" className="h-10 w-10 shrink-0 object-contain md:h-9 md:w-9" />
+            <div className="min-w-0">
+              <span className="block truncate text-base font-semibold leading-tight sm:hidden">UniPilot</span>
+              <span className="block truncate text-[11px] text-muted-foreground sm:hidden">
+                Study Abroad Made Simple
+              </span>
+              <span className="hidden text-xl font-semibold sm:block">UniPilot — Study Abroad Made Simple</span>
             </div>
-            <span className="text-xl font-semibold">UniPilot Everywhere</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -59,7 +63,7 @@ export function PublicNavbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2"
+            className="rounded-2xl border border-border/70 bg-white/80 p-2.5 shadow-sm transition-colors hover:bg-white md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
@@ -73,12 +77,12 @@ export function PublicNavbar() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
-            <nav className="flex flex-col gap-2">
+          <div className="border-t border-border py-4 md:hidden">
+            <nav className="flex flex-col gap-2 rounded-3xl border border-border/70 bg-white/80 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 const className = cn(
-                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                  'rounded-2xl px-4 py-3 text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -103,11 +107,11 @@ export function PublicNavbar() {
                   </Link>
                 );
               })}
-              <div className="px-4 pt-4 border-t border-border mt-2">
+              <div className="mt-2 border-t border-border px-4 pt-4">
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 transition-colors hover:text-muted-foreground"
                 >
                   Admin
                 </Link>

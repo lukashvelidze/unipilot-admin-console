@@ -42,9 +42,7 @@ export function AdminSidebar() {
   return (
     <aside className="sticky top-0 h-screen w-64 border-r border-border bg-sidebar flex flex-col">
       <div className="flex h-16 items-center gap-2 border-b border-border px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <span className="text-sm font-bold text-primary-foreground">U</span>
-        </div>
+        <img src="/favicon.png" alt="UniPilot logo" className="h-8 w-8 object-contain" />
         <span className="text-lg font-semibold text-sidebar-foreground">UniPilot Admin</span>
       </div>
       

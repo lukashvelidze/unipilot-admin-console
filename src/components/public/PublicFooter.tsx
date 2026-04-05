@@ -6,18 +6,22 @@ export function PublicFooter() {
   return (
     <footer className="border-t border-border bg-muted/30">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="md:col-span-2">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">U</span>
+            <Link to="/" className="mb-4 flex items-center gap-3">
+              <img src="/favicon.png" alt="UniPilot logo" className="h-8 w-8 object-contain" />
+              <div>
+                <span className="block text-base font-semibold leading-tight sm:text-lg">
+                  UniPilot
+                </span>
+                <span className="block text-xs text-muted-foreground sm:text-sm">
+                  Study Abroad Made Simple
+                </span>
               </div>
-              <span className="text-lg font-semibold">UniPilot Everywhere</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-md">
-              Your trusted companion for navigating the student visa journey.
-              We help international students achieve their dreams of studying abroad.
+              Step-by-step guidance, visa prep, and travel support for students planning to study abroad.
             </p>
           </div>
 
@@ -57,7 +61,7 @@ export function PublicFooter() {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} UniPilot Everywhere. All rights reserved.</p>
+          <p>&copy; {currentYear} UniPilot. All rights reserved.</p>
         </div>
       </div>
     </footer>

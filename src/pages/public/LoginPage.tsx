@@ -46,9 +46,7 @@ export function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary">
-              <span className="text-xl font-bold text-primary-foreground">U</span>
-            </div>
+            <img src="/favicon.png" alt="UniPilot logo" className="h-12 w-12 object-contain" />
           </div>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
