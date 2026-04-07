@@ -11,7 +11,7 @@ UniPilot Everywhere is a comprehensive platform designed to help international s
 
 ## Getting Started
 
-Download the app from TestFlight: https://testflight.apple.com/join/13bcqnX4
+Download the app from the App Store: https://apps.apple.com/us/app/unipilot-journey-tracker/id6748587544
 
 ## Development
 

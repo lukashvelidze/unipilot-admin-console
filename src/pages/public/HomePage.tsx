@@ -78,6 +78,9 @@ const readinessItems = [
   'A simpler process from planning to departure',
 ];
 
+const appStoreUrl = 'https://apps.apple.com/us/app/unipilot-journey-tracker/id6748587544';
+const ambassadorProgramUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeyjSw2h6nV8wlyFW5aKQPDXJQFhyQ3_DZ_RO0f-2Z6kkjr7g/viewform';
+
 export function HomePage() {
   return (
     <div className="bg-[linear-gradient(180deg,#f4efeb_0%,#f8f4f0_26%,#efe6e3_100%)]">
@@ -101,13 +104,15 @@ export function HomePage() {
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="w-full text-base shadow-sm sm:w-auto" asChild>
-                  <a href="https://testflight.apple.com/join/13bcqnX4" target="_blank" rel="noopener noreferrer">
-                    Join on TestFlight
+                  <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">
+                    Download on the App Store
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                 </Button>
                 <Button size="lg" variant="outline" className="w-full border-foreground/15 bg-white/70 text-base backdrop-blur hover:bg-white sm:w-auto" asChild>
-                  <Link to="/faqs">See How It Works</Link>
+                  <a href={ambassadorProgramUrl} target="_blank" rel="noopener noreferrer">
+                    Student Ambassador Program
+                  </a>
                 </Button>
               </div>
               <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4">
@@ -272,12 +277,12 @@ export function HomePage() {
               Study abroad with a clearer plan from day one.
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-              Join UniPilot on TestFlight for step-by-step guidance, visa prep, smart reminders, and document access in one place.
+              Download UniPilot from the App Store for step-by-step guidance, visa prep, smart reminders, and document access in one place.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Button size="lg" className="w-full text-base shadow-sm sm:w-auto" asChild>
-                <a href="https://testflight.apple.com/join/13bcqnX4" target="_blank" rel="noopener noreferrer">
-                  Join on TestFlight
+                <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">
+                  Download on the App Store
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </a>
               </Button>
