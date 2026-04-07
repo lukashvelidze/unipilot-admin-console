@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Public pages
 import { PublicLayout } from "./components/public/PublicLayout";
+import { AdminRoute } from "./components/admin/AdminRoute";
 import { HomePage } from "./pages/public/HomePage";
 import { FAQsPage } from "./pages/public/FAQsPage";
 import { TermsPage } from "./pages/public/TermsPage";
@@ -46,16 +47,18 @@ const App = () => (
           </Route>
 
           {/* Admin routes */}
-          <Route path="/admin" element={<Dashboard />} />
-          <Route path="/admin/users" element={<UsersPage />} />
-          <Route path="/admin/countries" element={<CountriesPage />} />
-          <Route path="/admin/visa-types" element={<VisaTypesPage />} />
-          <Route path="/admin/checklists" element={<ChecklistsPage />} />
-          <Route path="/admin/article-categories" element={<ArticleCategoriesPage />} />
-          <Route path="/admin/articles" element={<ArticlesPage />} />
-          <Route path="/admin/articles/new" element={<ArticleCreatePage />} />
-          <Route path="/admin/articles/:slug" element={<ArticleEditPage />} />
-          <Route path="/admin/settings" element={<PlaceholderPage title="Settings" description="Configure admin panel settings" />} />
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/admin/users" element={<UsersPage />} />
+            <Route path="/admin/countries" element={<CountriesPage />} />
+            <Route path="/admin/visa-types" element={<VisaTypesPage />} />
+            <Route path="/admin/checklists" element={<ChecklistsPage />} />
+            <Route path="/admin/article-categories" element={<ArticleCategoriesPage />} />
+            <Route path="/admin/articles" element={<ArticlesPage />} />
+            <Route path="/admin/articles/new" element={<ArticleCreatePage />} />
+            <Route path="/admin/articles/:slug" element={<ArticleEditPage />} />
+            <Route path="/admin/settings" element={<PlaceholderPage title="Settings" description="Configure admin panel settings" />} />
+          </Route>
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

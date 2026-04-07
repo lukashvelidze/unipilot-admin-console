@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
+import { getAdminAccessErrorMessage, verifyAdminAccess } from '@/lib/adminAccess';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
@@ -21,7 +22,7 @@ export function LoginPage() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -31,6 +32,14 @@ export function LoginPage() {
       }
 
       if (data.user) {
+        const access = await verifyAdminAccess(data.user);
+
+        if (!access.allowed) {
+          await supabase.auth.signOut();
+          toast.error(getAdminAccessErrorMessage(access.reason));
+          return;
+        }
+
         toast.success('Welcome back!');
         navigate('/admin');
       }
@@ -60,7 +69,7 @@ export function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@unipilot.com"
+                placeholder="admin@unipilot.app"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

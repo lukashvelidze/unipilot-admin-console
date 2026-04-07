@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -28,6 +29,16 @@ const navItems = [
 export function AdminSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [adminEmail, setAdminEmail] = useState('');
+
+  useEffect(() => {
+    const loadAdminUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setAdminEmail(data.user?.email ?? '');
+    };
+
+    loadAdminUser();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -76,7 +87,7 @@ export function AdminSidebar() {
           </div>
           <div className="flex-1 truncate">
             <p className="text-sm font-medium text-sidebar-foreground">Admin</p>
-            <p className="text-xs text-muted-foreground truncate">admin@unipilot.com</p>
+            <p className="text-xs text-muted-foreground truncate">{adminEmail || 'admin@unipilot.app'}</p>
           </div>
         </div>
         <button

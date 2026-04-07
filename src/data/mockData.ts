@@ -73,7 +73,7 @@ export interface ChecklistItem {
 export const mockUsers: User[] = [
   { id: '1', email: 'john@example.com', fullName: 'John Smith', createdAt: '2024-01-15', lastSignIn: '2024-12-02', isSuperAdmin: false, isBanned: false, subscriptionTier: 'premium' },
   { id: '2', email: 'jane@example.com', fullName: 'Jane Doe', createdAt: '2024-02-20', lastSignIn: '2024-12-01', isSuperAdmin: false, isBanned: false, subscriptionTier: 'free' },
-  { id: '3', email: 'admin@unipilot.com', fullName: 'Admin User', createdAt: '2024-01-01', lastSignIn: '2024-12-03', isSuperAdmin: true, isBanned: false, subscriptionTier: 'premium' },
+  { id: '3', email: 'admin@unipilot.app', fullName: 'Admin User', createdAt: '2024-01-01', lastSignIn: '2024-12-03', isSuperAdmin: true, isBanned: false, subscriptionTier: 'premium' },
   { id: '4', email: 'mike@example.com', fullName: 'Mike Wilson', createdAt: '2024-03-10', lastSignIn: '2024-11-28', isSuperAdmin: false, isBanned: true, subscriptionTier: 'free' },
   { id: '5', email: 'sarah@example.com', fullName: 'Sarah Johnson', createdAt: '2024-04-05', lastSignIn: '2024-12-02', isSuperAdmin: false, isBanned: false, subscriptionTier: 'premium' },
 ];
