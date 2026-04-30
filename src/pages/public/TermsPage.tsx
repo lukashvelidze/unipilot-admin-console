@@ -114,7 +114,7 @@ export function TermsPage() {
               If you have any questions about these Terms & Conditions, please contact us at:
             </p>
             <p className="text-muted-foreground">
-              Email: legal@unipilot.com
+              Email: unipilot@unipilot.app
             </p>
           </section>
         </div>

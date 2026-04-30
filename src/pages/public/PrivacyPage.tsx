@@ -113,7 +113,7 @@ export function PrivacyPage() {
               <li><strong>Restriction:</strong> Request limitation of processing</li>
             </ul>
             <p className="text-muted-foreground mt-4">
-              To exercise any of these rights, please contact us at privacy@unipilot.com.
+              To exercise any of these rights, please contact us at unipilot@unipilot.app.
             </p>
           </section>
 
@@ -160,7 +160,7 @@ export function PrivacyPage() {
               If you have any questions about this Privacy Policy or our data practices, please contact us at:
             </p>
             <p className="text-muted-foreground">
-              Email: unipilotapp@gmail.com
+              Email: unipilot@unipilot.app
             </p>
           </section>
         </div>

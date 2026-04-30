@@ -4,64 +4,32 @@ export function PublicFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-muted/30">
+    <footer className="border-t border-black/6 bg-white">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <Link to="/" className="mb-4 flex items-center gap-3">
-              <img src="/favicon.png" alt="UniPilot logo" className="h-8 w-8 object-contain" />
-              <div>
-                <span className="block text-base font-semibold leading-tight sm:text-lg">
-                  UniPilot
-                </span>
-                <span className="block text-xs text-muted-foreground sm:text-sm">
-                  Study Abroad Made Simple
-                </span>
-              </div>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-base font-semibold tracking-[-0.03em] text-slate-950">UniPilot</p>
+            <p className="mt-1 text-sm text-slate-500">Your international journey tracker</p>
+          </div>
+
+          <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+            <Link to="/articles" className="transition-colors hover:text-slate-950">
+              Articles
             </Link>
-            <p className="text-sm text-muted-foreground max-w-md">
-              Step-by-step guidance, visa prep, and travel support for students planning to study abroad.
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/faqs" className="text-muted-foreground hover:text-foreground transition-colors">
-                  FAQs
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="font-semibold mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <a href="https://unipilot.app/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Privacy Policy
-                </a>
-              </li>
-            </ul>
+            <Link to="/faqs" className="transition-colors hover:text-slate-950">
+              FAQs
+            </Link>
+            <Link to="/terms" className="transition-colors hover:text-slate-950">
+              Terms
+            </Link>
+            <a href="https://unipilot.app/privacy" className="transition-colors hover:text-slate-950">
+              Privacy
+            </a>
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; {currentYear} UniPilot. All rights reserved.</p>
+        <div className="mt-6 border-t border-black/6 pt-6 text-sm text-slate-500">
+          &copy; {currentYear} UniPilot. All rights reserved.
         </div>
       </div>
     </footer>

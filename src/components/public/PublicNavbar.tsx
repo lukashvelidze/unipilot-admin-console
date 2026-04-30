@@ -1,44 +1,45 @@
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const navItems = [
   { label: 'Home', href: '/' },
   { label: 'Articles', href: '/articles' },
   { label: 'FAQs', href: '/faqs' },
-  { label: 'Terms & Conditions', href: '/terms' },
-  { label: 'Privacy Policy', href: 'https://unipilot.app/privacy', external: true },
+  { label: 'Privacy', href: 'https://unipilot.app/privacy', external: true },
 ];
+
+const appStoreUrl = 'https://apps.apple.com/us/app/unipilot-journey-tracker/id6748587544';
 
 export function PublicNavbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-black/6 bg-white/92 backdrop-blur-xl">
       <div className="container mx-auto px-4">
-        <div className="flex h-18 items-center justify-between gap-3 py-3 md:h-16 md:py-0">
-          {/* Logo */}
+        <div className="flex min-h-[72px] items-center justify-between gap-4">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <img src="/favicon.png" alt="UniPilot logo" className="h-10 w-10 shrink-0 object-contain md:h-9 md:w-9" />
+            <img src="/favicon.png" alt="UniPilot logo" className="h-10 w-10 shrink-0 object-contain" />
             <div className="min-w-0">
-              <span className="block truncate text-base font-semibold leading-tight sm:hidden">UniPilot</span>
-              <span className="block truncate text-[11px] text-muted-foreground sm:hidden">
-                Study Abroad Made Simple
+              <span className="block truncate text-lg font-semibold tracking-[-0.03em] text-slate-950">
+                UniPilot
               </span>
-              <span className="hidden text-xl font-semibold sm:block">UniPilot — Study Abroad Made Simple</span>
+              <span className="block truncate text-xs text-slate-500">
+                Your international journey tracker
+              </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden items-center gap-6 md:flex">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
+              const isActive = !item.external && location.pathname === item.href;
               const className = cn(
-                'text-sm font-medium transition-colors hover:text-primary',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                'text-sm font-medium transition-colors hover:text-slate-950',
+                isActive ? 'text-slate-950' : 'text-slate-600'
               );
+
               return item.external ? (
                 <a key={item.href} href={item.href} className={className}>
                   {item.label}
@@ -51,48 +52,39 @@ export function PublicNavbar() {
             })}
           </nav>
 
-          {/* Subtle Admin Link */}
-          <div className="hidden md:block">
-            <Link
-              to="/login"
-              className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-            >
-              Log In
+          <div className="hidden items-center gap-4 md:flex">
+            <Link to="/login" className="text-sm text-slate-500 transition-colors hover:text-slate-950">
+              Log in
             </Link>
+            <a
+              href={appStoreUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+            >
+              Download
+            </a>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
-            className="rounded-2xl border border-border/70 bg-white/80 p-2.5 shadow-sm transition-colors hover:bg-white md:hidden"
+            className="rounded-2xl border border-black/10 bg-white p-2.5 transition-colors hover:bg-slate-50 md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
-        {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="border-t border-border py-4 md:hidden">
-            <nav className="flex flex-col gap-2 rounded-3xl border border-border/70 bg-white/80 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.href;
-                const className = cn(
-                  'rounded-2xl px-4 py-3 text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                );
-                return item.external ? (
+          <div className="border-t border-black/6 py-4 md:hidden">
+            <nav className="flex flex-col gap-2">
+              {navItems.map((item) =>
+                item.external ? (
                   <a
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={className}
+                    className="rounded-2xl px-4 py-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-950"
                   >
                     {item.label}
                   </a>
@@ -101,17 +93,26 @@ export function PublicNavbar() {
                     key={item.href}
                     to={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={className}
+                    className="rounded-2xl px-4 py-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-950"
                   >
                     {item.label}
                   </Link>
-                );
-              })}
-              <div className="mt-2 border-t border-border px-4 pt-4">
+                )
+              )}
+
+              <div className="mt-2 flex flex-col gap-3 border-t border-black/6 pt-4">
+                <a
+                  href={appStoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full bg-slate-950 px-4 py-3 text-center text-sm font-medium text-white"
+                >
+                  Download
+                </a>
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-xs uppercase tracking-[0.2em] text-muted-foreground/60 transition-colors hover:text-muted-foreground"
+                  className="px-1 text-xs uppercase tracking-[0.18em] text-slate-500"
                 >
                   Admin
                 </Link>
