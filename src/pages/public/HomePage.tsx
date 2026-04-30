@@ -36,28 +36,28 @@ export function HomePage() {
   return (
     <div className="bg-white font-sans text-slate-950">
       <section className="border-b border-black/6 bg-white">
-        <div className="container mx-auto px-4 py-10 sm:py-16 lg:py-24">
+        <div className="landing-hero-shell container mx-auto px-4">
           <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-            <div className="landing-fade-up landing-delay-1 w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[520px]">
+            <div className="landing-hero-globe landing-fade-up landing-delay-1 w-full max-w-[340px] sm:max-w-none">
               <RotatingGlobe />
             </div>
 
-            <div className="mt-6 max-w-3xl sm:mt-8">
+            <div className="landing-hero-copy max-w-3xl">
               <p className="landing-fade-up px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
                 International student platform
               </p>
 
-              <h1 className="landing-fade-up landing-delay-2 mt-4 text-[2rem] font-semibold leading-[1] tracking-[-0.05em] sm:text-[3.2rem] lg:text-[4rem]">
+              <h1 className="landing-hero-title landing-fade-up landing-delay-2 mt-4 font-semibold leading-[1] tracking-[-0.05em]">
                 Track your study abroad journey with
                 {' '}
                 <span className="text-[#ff6b6b]">UniPilot</span>.
               </h1>
 
-              <p className="landing-fade-up landing-delay-3 mx-auto mt-5 max-w-[32rem] px-1 text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
+              <p className="landing-hero-body landing-fade-up landing-delay-3 mx-auto max-w-[32rem] px-1 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
                 UniPilot helps students track the full move abroad process from application to arrival.
               </p>
 
-              <div className="landing-fade-up landing-delay-4 mt-7 flex w-full flex-col items-center gap-3 sm:mt-8 sm:flex-row sm:justify-center">
+              <div className="landing-hero-actions landing-fade-up landing-delay-4 flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <Button size="lg" className="w-full rounded-full px-6 text-base shadow-none sm:w-auto sm:px-7" asChild>
                   <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">
                     Download the app
@@ -74,7 +74,7 @@ export function HomePage() {
                 </Button>
               </div>
 
-              <div className="landing-fade-up landing-delay-4 mt-7 flex flex-wrap justify-center gap-2 sm:mt-8">
+              <div className="landing-hero-tags landing-fade-up landing-delay-4 flex flex-wrap justify-center gap-2">
                 {bullets.map((item) => (
                   <span
                     key={item}
