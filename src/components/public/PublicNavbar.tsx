@@ -21,12 +21,12 @@ export function PublicNavbar() {
       <div className="container mx-auto px-4">
         <div className="flex min-h-[72px] items-center justify-between gap-4">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <img src="/favicon.png" alt="UniPilot logo" className="h-10 w-10 shrink-0 object-contain" />
+            <img src="/favicon.png" alt="UniPilot logo" className="h-9 w-9 shrink-0 object-contain sm:h-10 sm:w-10" />
             <div className="min-w-0">
-              <span className="block truncate text-lg font-semibold tracking-[-0.03em] text-slate-950">
+              <span className="block truncate text-base font-semibold tracking-[-0.03em] text-slate-950 sm:text-lg">
                 UniPilot
               </span>
-              <span className="block truncate text-xs text-slate-500">
+              <span className="hidden truncate text-xs text-slate-500 sm:block">
                 Your international journey tracker
               </span>
             </div>

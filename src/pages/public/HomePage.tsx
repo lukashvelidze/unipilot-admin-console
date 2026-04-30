@@ -36,29 +36,29 @@ export function HomePage() {
   return (
     <div className="bg-white font-sans text-slate-950">
       <section className="border-b border-black/6 bg-white">
-        <div className="container mx-auto px-4 py-14 sm:py-16 lg:py-24">
+        <div className="container mx-auto px-4 py-10 sm:py-16 lg:py-24">
           <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-            <div className="landing-fade-up landing-delay-1 w-full max-w-[520px]">
+            <div className="landing-fade-up landing-delay-1 w-full max-w-[340px] sm:max-w-[420px] lg:max-w-[520px]">
               <RotatingGlobe />
             </div>
 
-            <div className="mt-8 max-w-3xl">
-              <p className="landing-fade-up text-xs font-medium uppercase tracking-[0.22em] text-slate-500">
+            <div className="mt-6 max-w-3xl sm:mt-8">
+              <p className="landing-fade-up px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 sm:text-xs sm:tracking-[0.22em]">
                 International student platform
               </p>
 
-              <h1 className="landing-fade-up landing-delay-2 mt-4 text-[2.4rem] font-semibold leading-[0.96] tracking-[-0.05em] sm:text-[3.2rem] lg:text-[4rem]">
+              <h1 className="landing-fade-up landing-delay-2 mt-4 text-[2rem] font-semibold leading-[1] tracking-[-0.05em] sm:text-[3.2rem] lg:text-[4rem]">
                 Track your study abroad journey with
                 {' '}
                 <span className="text-[#ff6b6b]">UniPilot</span>.
               </h1>
 
-              <p className="landing-fade-up landing-delay-3 mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+              <p className="landing-fade-up landing-delay-3 mx-auto mt-5 max-w-[32rem] px-1 text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-8">
                 UniPilot helps students track the full move abroad process from application to arrival.
               </p>
 
-              <div className="landing-fade-up landing-delay-4 mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-                <Button size="lg" className="rounded-full px-7 text-base shadow-none" asChild>
+              <div className="landing-fade-up landing-delay-4 mt-7 flex w-full flex-col items-center gap-3 sm:mt-8 sm:flex-row sm:justify-center">
+                <Button size="lg" className="w-full rounded-full px-6 text-base shadow-none sm:w-auto sm:px-7" asChild>
                   <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">
                     Download the app
                     <ArrowRight className="ml-2 h-5 w-5" />
@@ -67,18 +67,18 @@ export function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="rounded-full border-black/10 bg-white px-7 text-base text-slate-700 shadow-none hover:bg-slate-50"
+                  className="w-full rounded-full border-black/10 bg-white px-6 text-base text-slate-700 shadow-none hover:bg-slate-50 sm:w-auto sm:px-7"
                   asChild
                 >
                   <a href={ambassadorProgramUrl} target="_blank" rel="noopener noreferrer">Student Ambassador Program</a>
                 </Button>
               </div>
 
-              <div className="landing-fade-up landing-delay-4 mt-8 flex flex-wrap justify-center gap-2">
+              <div className="landing-fade-up landing-delay-4 mt-7 flex flex-wrap justify-center gap-2 sm:mt-8">
                 {bullets.map((item) => (
                   <span
                     key={item}
-                    className="rounded-full border border-black/8 px-3 py-1.5 text-sm text-slate-600"
+                    className="rounded-full border border-black/8 px-3 py-1.5 text-xs text-slate-600 sm:text-sm"
                   >
                     {item}
                   </span>
@@ -89,7 +89,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section id="features" className="border-b border-black/8 bg-slate-950 py-14 text-white sm:py-16">
+      <section id="features" className="border-b border-black/8 bg-slate-950 py-12 text-white sm:py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl">
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-400">What UniPilot does</p>
@@ -98,9 +98,9 @@ export function HomePage() {
             </h2>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 md:mt-10 md:grid-cols-3">
             {features.map((feature) => (
-              <div key={feature.title} className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+              <div key={feature.title} className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
                   <feature.icon className="h-5 w-5" />
                 </div>
@@ -110,7 +110,7 @@ export function HomePage() {
             ))}
           </div>
 
-          <div className="mt-10 flex items-start gap-3 rounded-3xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-slate-300">
+          <div className="mt-8 flex items-start gap-3 rounded-3xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-slate-300 sm:mt-10 sm:px-5">
             <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
             <p>
               UniPilot is built to reduce missed steps and last-minute scrambling by giving students one place to track the journey.
@@ -119,9 +119,9 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="bg-slate-100 py-14 sm:py-16">
+      <section className="bg-slate-100 py-12 sm:py-16">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl border border-black/8 bg-white p-6 sm:flex-row sm:items-center sm:p-8">
+          <div className="flex flex-col items-start justify-between gap-6 rounded-3xl border border-black/8 bg-white p-5 sm:flex-row sm:items-center sm:p-8">
             <div className="max-w-xl">
               <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Get started</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
@@ -130,7 +130,7 @@ export function HomePage() {
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-              <Button size="lg" className="rounded-full px-7 text-base shadow-none" asChild>
+              <Button size="lg" className="w-full rounded-full px-7 text-base shadow-none sm:w-auto" asChild>
                 <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">
                   Download the app
                 </a>
@@ -138,7 +138,7 @@ export function HomePage() {
               <Button
                 size="lg"
                 variant="ghost"
-                className="rounded-full px-7 text-base text-slate-700 hover:bg-slate-50"
+                className="w-full rounded-full px-7 text-base text-slate-700 hover:bg-slate-50 sm:w-auto"
                 asChild
               >
                 <Link to="/articles">Read articles</Link>
