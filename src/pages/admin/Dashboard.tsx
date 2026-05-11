@@ -56,18 +56,18 @@ interface AutoVisaType {
 }
 
 const AUTO_VISA_PREFIX = 'AUTO_STUDENT_';
-const makeChecklistKey = (visaType: string, title: string) => JSON.stringify({ visaType, title });
+const KEY_SEPARATOR = '::';
+const makeChecklistKey = (visaType: string, title: string) =>
+  `${encodeURIComponent(visaType)}${KEY_SEPARATOR}${encodeURIComponent(title)}`;
 const makeChecklistItemKey = (checklistId: string | null, label: string, sortOrder: number) =>
-  JSON.stringify({ checklistId, label, sortOrder });
+  `${encodeURIComponent(checklistId || '')}${KEY_SEPARATOR}${encodeURIComponent(label)}${KEY_SEPARATOR}${sortOrder}`;
 
 const getAllCountryCodes = () => {
-  const supportedValuesOf = (Intl as unknown as {
-    supportedValuesOf?: (key: string) => string[];
-  }).supportedValuesOf;
+  const supportedValuesOf = Reflect.get(Intl, 'supportedValuesOf');
 
-  if (!supportedValuesOf) return [];
+  if (typeof supportedValuesOf !== 'function') return [];
 
-  return supportedValuesOf('region').filter((code) => /^[A-Z]{2}$/.test(code));
+  return supportedValuesOf.call(Intl, 'region').filter((code: string) => /^[A-Z]{2}$/.test(code));
 };
 
 const getAllDestinationCountries = (): AutoCountry[] => {
@@ -260,7 +260,7 @@ export default function Dashboard() {
     const missingChecklistPayload = allCountries.flatMap((country) => {
       const visaCode = `${AUTO_VISA_PREFIX}${country.code}`;
       return templateChecklists
-        .filter((templateChecklist) => !existingChecklistKeys.has(`${visaCode}::${templateChecklist.title}`))
+        .filter((templateChecklist) => !existingChecklistKeys.has(makeChecklistKey(visaCode, templateChecklist.title)))
         .map((templateChecklist) => ({
           visa_type: visaCode,
           country_code: country.code,
