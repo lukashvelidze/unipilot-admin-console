@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { DataTable } from '@/components/admin/DataTable';
@@ -8,6 +8,22 @@ import { Users, Globe, CheckSquare, Stamp, Loader2, FileText, Bot } from 'lucide
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface DashboardStats {
   totalCountries: number;
@@ -55,12 +71,27 @@ interface AutoVisaType {
   is_active: boolean;
 }
 
+interface EducationOption {
+  value: string;
+  label: string;
+  slug: string;
+  matchers: string[];
+}
+
 const AUTO_VISA_PREFIX = 'AUTO_STUDENT_';
 const KEY_SEPARATOR = '::';
 const makeChecklistKey = (visaType: string, title: string) =>
   `${encodeURIComponent(visaType)}${KEY_SEPARATOR}${encodeURIComponent(title)}`;
 const makeChecklistItemKey = (checklistId: string | null, label: string, sortOrder: number) =>
   `${encodeURIComponent(checklistId || '')}${KEY_SEPARATOR}${encodeURIComponent(label)}${KEY_SEPARATOR}${sortOrder}`;
+
+const EDUCATION_LEVELS: EducationOption[] = [
+  { value: 'general', label: 'All education levels', slug: 'GENERAL', matchers: [] },
+  { value: 'undergraduate', label: 'Undergraduate', slug: 'UNDERGRAD', matchers: ['undergraduate', 'bachelor', 'bachelors', 'bsc', 'ba'] },
+  { value: 'graduate', label: 'Graduate', slug: 'GRAD', matchers: ['graduate', 'master', 'masters', 'msc', 'ma', 'mba', 'postgraduate'] },
+  { value: 'doctorate', label: 'Doctorate / PhD', slug: 'PHD', matchers: ['phd', 'doctorate', 'doctoral', 'dphil'] },
+];
+const DEFAULT_EDUCATION_LEVEL = EDUCATION_LEVELS[0]?.value ?? 'general';
 
 const getAllCountryCodes = () => {
   const supportedValuesOf = Reflect.get(Intl, 'supportedValuesOf');
@@ -80,6 +111,16 @@ const getAllDestinationCountries = (): AutoCountry[] => {
     .sort((a, b) => a.name.localeCompare(b.name));
 };
 
+const normalizeText = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+const buildAutoVisaCode = (countryCode: string, educationSlug: string, originCode?: string | null) => {
+  const segments = [educationSlug];
+  if (originCode) segments.push(originCode);
+  segments.push(countryCode);
+  return `${AUTO_VISA_PREFIX}${segments.join('_')}`;
+};
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalCountries: 0,
@@ -89,20 +130,34 @@ export default function Dashboard() {
   const [recentProfiles, setRecentProfiles] = useState<RecentProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [automating, setAutomating] = useState(false);
+  const [automationDialogOpen, setAutomationDialogOpen] = useState(false);
+  const [automationForm, setAutomationForm] = useState({
+    destinationCountry: 'all',
+    originCountry: 'all',
+    educationLevel: DEFAULT_EDUCATION_LEVEL,
+  });
+  const [destinationOptions, setDestinationOptions] = useState<AutoCountry[]>([]);
+  const [originOptions, setOriginOptions] = useState<AutoCountry[]>([]);
+  const fallbackCountries = useMemo(() => getAllDestinationCountries(), []);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
 
-    const [countriesRes, visaTypesRes, checklistsRes, profilesRes] = await Promise.all([
+    const [
+      countriesRes,
+      visaTypesRes,
+      checklistsRes,
+      profilesRes,
+      destinationsRes,
+      originsRes,
+    ] = await Promise.all([
       supabase.from('destination_countries').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('visa_types').select('*', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('checklists').select('*', { count: 'exact', head: true }),
-      supabase.from('profiles').select('id, full_name, email, subscription_tier, created_at').order('created_at', { ascending: false }).limit(5)
+      supabase.from('profiles').select('id, full_name, email, subscription_tier, created_at').order('created_at', { ascending: false }).limit(5),
+      supabase.from('destination_countries').select('*').eq('is_active', true).order('name'),
+      supabase.from('origin_countries').select('*').eq('is_active', true).order('name'),
     ]);
 
     setStats({
@@ -112,22 +167,70 @@ export default function Dashboard() {
     });
 
     setRecentProfiles(profilesRes.data || []);
+
+    if (destinationsRes.error) {
+      toast({ title: 'Error loading destination countries', description: destinationsRes.error.message, variant: 'destructive' });
+    } else {
+      setDestinationOptions(destinationsRes.data || []);
+    }
+
+    if (originsRes.error) {
+      toast({ title: 'Error loading origin countries', description: originsRes.error.message, variant: 'destructive' });
+    } else {
+      setOriginOptions(originsRes.data || []);
+    }
+
     setLoading(false);
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const runAutomatedBackfill = async () => {
     setAutomating(true);
 
-    const allCountries = getAllDestinationCountries();
-    if (allCountries.length === 0) {
+    const destinationChoices = destinationOptions.length > 0 ? destinationOptions : fallbackCountries;
+    const originChoices = originOptions.length > 0 ? originOptions : fallbackCountries;
+
+    if (destinationChoices.length === 0) {
       toast({
         title: 'Automation unavailable',
-        description: 'Unable to resolve full country list in this browser.',
+        description: 'Unable to resolve a destination country list in this browser.',
         variant: 'destructive'
       });
       setAutomating(false);
       return;
     }
+
+    const targetCountries = automationForm.destinationCountry === 'all'
+      ? destinationChoices
+      : destinationChoices.filter((country) => country.code === automationForm.destinationCountry);
+
+    if (targetCountries.length === 0) {
+      toast({
+        title: 'Automation blocked',
+        description: 'The selected destination country is not available.',
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const selectedEducation = EDUCATION_LEVELS.find((level) => level.value === automationForm.educationLevel)
+      || EDUCATION_LEVELS.find((level) => level.value === DEFAULT_EDUCATION_LEVEL)
+      || EDUCATION_LEVELS[0];
+    const originCode = automationForm.originCountry === 'all' ? null : automationForm.originCountry;
+    const originName = originCode
+      ? originChoices.find((country) => country.code === originCode)?.name || originCode
+      : null;
+    const educationLabel = selectedEducation.label;
+    const educationDescriptor = selectedEducation.value === 'general'
+      ? 'student'
+      : educationLabel.toLowerCase();
+
+    const getDestinationName = (code: string) =>
+      destinationChoices.find((country) => country.code === code)?.name || code;
 
     const [visaRes, checklistRes, itemRes] = await Promise.all([
       supabase.from('visa_types').select('code, country_code, title, description, is_active'),
@@ -175,9 +278,27 @@ export default function Dashboard() {
       checklistCounts.set(checklist.visa_type, (checklistCounts.get(checklist.visa_type) || 0) + 1);
     });
 
-    const templateVisaCodeWithMostChecklists = manualVisas
-      .sort((a, b) => (checklistCounts.get(b.code) || 0) - (checklistCounts.get(a.code) || 0))[0]
-      ?.code;
+    const educationMatchedVisas = selectedEducation.value === 'general'
+      ? manualVisas
+      : manualVisas.filter((visa) => {
+        const haystack = normalizeText(`${visa.title} ${visa.code} ${visa.description || ''}`);
+        return selectedEducation.matchers.some((matcher) => haystack.includes(matcher));
+      });
+
+    if (selectedEducation.value !== 'general' && educationMatchedVisas.length === 0) {
+      toast({
+        title: 'Education match not found',
+        description: 'No manual visa types matched the selected education level. Using the most complete template instead.',
+      });
+    }
+
+    const candidateVisas = educationMatchedVisas.length > 0 ? educationMatchedVisas : manualVisas;
+    const templateVisa = candidateVisas.reduce<AutoVisaType | null>((best, visa) => {
+      if (!best) return visa;
+      return (checklistCounts.get(visa.code) || 0) > (checklistCounts.get(best.code) || 0) ? visa : best;
+    }, null);
+
+    const templateVisaCodeWithMostChecklists = templateVisa?.code;
 
     if (!templateVisaCodeWithMostChecklists) {
       toast({
@@ -223,7 +344,7 @@ export default function Dashboard() {
 
     const { error: countriesUpsertError } = await supabase
       .from('destination_countries')
-      .upsert(allCountries, { onConflict: 'code' });
+      .upsert(targetCountries, { onConflict: 'code' });
 
     if (countriesUpsertError) {
       toast({ title: 'Country sync failed', description: countriesUpsertError.message, variant: 'destructive' });
@@ -231,13 +352,23 @@ export default function Dashboard() {
       return;
     }
 
-    const autoVisaPayload = allCountries.map((country) => ({
-      code: `${AUTO_VISA_PREFIX}${country.code}`,
-      country_code: country.code,
-      title: 'Student Visa Plan',
-      description: 'Auto-generated student visa plan based on your base procedures.',
-      is_active: true
-    }));
+    const planTitle = selectedEducation.value === 'general'
+      ? 'Student Visa Plan'
+      : `${educationLabel} Student Visa Plan`;
+
+    const autoVisaPayload = targetCountries.map((country) => {
+      const destinationName = getDestinationName(country.code);
+      const routeLabel = originName ? `${originName} to ${destinationName}` : destinationName;
+      return {
+        code: buildAutoVisaCode(country.code, selectedEducation.slug, originCode),
+        country_code: country.code,
+        title: planTitle,
+        description: `Auto-generated ${educationDescriptor} visa plan for ${routeLabel} based on your base procedures.`,
+        is_active: true
+      };
+    });
+
+    const targetVisaCodes = autoVisaPayload.map((payload) => payload.code);
 
     const { error: visasUpsertError } = await supabase
       .from('visa_types')
@@ -252,7 +383,7 @@ export default function Dashboard() {
     const { data: existingAutoChecklists, error: existingAutoChecklistsError } = await supabase
       .from('checklists')
       .select('id, visa_type, title')
-      .like('visa_type', `${AUTO_VISA_PREFIX}%`);
+      .in('visa_type', targetVisaCodes);
 
     if (existingAutoChecklistsError) {
       toast({
@@ -267,8 +398,8 @@ export default function Dashboard() {
     const initialAutoChecklists = existingAutoChecklists || [];
     const existingChecklistKeys = new Set(initialAutoChecklists.map((checklist) => makeChecklistKey(checklist.visa_type, checklist.title)));
 
-    const missingChecklistPayload = allCountries.flatMap((country) => {
-      const visaCode = `${AUTO_VISA_PREFIX}${country.code}`;
+    const missingChecklistPayload = targetCountries.flatMap((country) => {
+      const visaCode = buildAutoVisaCode(country.code, selectedEducation.slug, originCode);
       return templateChecklists
         .filter((templateChecklist) => !existingChecklistKeys.has(makeChecklistKey(visaCode, templateChecklist.title)))
         .map((templateChecklist) => ({
@@ -301,7 +432,7 @@ export default function Dashboard() {
       const { data: refreshedAutoChecklists, error: refreshedAutoChecklistsError } = await supabase
         .from('checklists')
         .select('id, title')
-        .like('visa_type', `${AUTO_VISA_PREFIX}%`);
+        .in('visa_type', targetVisaCodes);
 
       if (refreshedAutoChecklistsError) {
         toast({
@@ -317,13 +448,22 @@ export default function Dashboard() {
     }
 
     const autoChecklistIds = allAutoChecklists.map((checklist) => checklist.id);
+    const destinationSummary = automationForm.destinationCountry === 'all'
+      ? `${targetCountries.length} destinations`
+      : getDestinationName(automationForm.destinationCountry);
+    const educationSummary = selectedEducation.value === 'general'
+      ? 'all education levels'
+      : selectedEducation.label;
+    const originSummary = originName ? ` from ${originName}` : '';
+
     if (autoChecklistIds.length === 0) {
       await fetchDashboardData();
       toast({
         title: 'Automated backfill complete',
-        description: 'Countries and visa plans were synced. No checklist procedures required updates.'
+        description: `Visa plans were synced for ${destinationSummary}${originSummary} (${educationSummary}). No checklist procedures required updates.`
       });
       setAutomating(false);
+      setAutomationDialogOpen(false);
       return;
     }
 
@@ -374,9 +514,10 @@ export default function Dashboard() {
     await fetchDashboardData();
     toast({
       title: 'Automated backfill complete',
-      description: 'All destination countries and checklist procedures were synced to the database.'
+      description: `Checklist procedures were synced for ${destinationSummary}${originSummary} (${educationSummary}).`
     });
     setAutomating(false);
+    setAutomationDialogOpen(false);
   };
 
   const userColumns = [
@@ -405,6 +546,9 @@ export default function Dashboard() {
       render: (user: RecentProfile) => new Date(user.created_at).toLocaleDateString()
     },
   ];
+
+  const destinationChoices = destinationOptions.length > 0 ? destinationOptions : fallbackCountries;
+  const originChoices = originOptions.length > 0 ? originOptions : fallbackCountries;
 
   if (loading) {
     return (
@@ -462,14 +606,14 @@ export default function Dashboard() {
             </div>
             <Button
               type="button"
-              onClick={runAutomatedBackfill}
+              onClick={() => setAutomationDialogOpen(true)}
               disabled={automating}
               className="w-full justify-start gap-3 h-auto p-4"
             >
               {automating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Bot className="h-5 w-5" />}
               <div className="text-left">
-                <p className="font-medium">Run Automated Country & Procedure Backfill</p>
-                <p className="text-sm opacity-90">Sync all destination countries and auto-create matching plans.</p>
+                <p className="font-medium">Generate Country Checklists</p>
+                <p className="text-sm opacity-90">Pick origin, destination, and education level to auto-create procedures.</p>
               </div>
             </Button>
             <div className="grid gap-3">
@@ -517,6 +661,90 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <Dialog open={automationDialogOpen} onOpenChange={setAutomationDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate country checklists</DialogTitle>
+            <DialogDescription>
+              Choose the destination, education level, and optionally an origin country to auto-create visa plans and procedures.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2">
+              <Label>Destination country</Label>
+              <Select
+                value={automationForm.destinationCountry}
+                onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, destinationCountry: value }))}
+                disabled={automating || destinationChoices.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select destination" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All destinations</SelectItem>
+                  {destinationChoices.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Origin country (optional)</Label>
+              <Select
+                value={automationForm.originCountry}
+                onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, originCountry: value }))}
+                disabled={automating || originChoices.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All origins" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All origins</SelectItem>
+                  {originChoices.map((country) => (
+                    <SelectItem key={country.code} value={country.code}>
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Education level</Label>
+              <Select
+                value={automationForm.educationLevel}
+                onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, educationLevel: value }))}
+                disabled={automating}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EDUCATION_LEVELS.map((level) => (
+                    <SelectItem key={level.value} value={level.value}>
+                      {level.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {destinationChoices.length === 0 && (
+              <p className="text-sm text-destructive">No destination countries are available for automation.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAutomationDialogOpen(false)} disabled={automating}>
+              Cancel
+            </Button>
+            <Button onClick={runAutomatedBackfill} disabled={automating || destinationChoices.length === 0}>
+              {automating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Generate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
