@@ -150,10 +150,20 @@ export default function Dashboard() {
     const checklistItems = (itemRes.data || []) as AutoChecklistItem[];
 
     const manualVisas = visas.filter((visa) => !visa.code.startsWith(AUTO_VISA_PREFIX));
-    if (manualVisas.length === 0 || checklists.length === 0) {
+    if (manualVisas.length === 0) {
       toast({
         title: 'Backfill blocked',
-        description: 'Please keep at least one manually created visa/checklist template.',
+        description: 'No manual visa types found to use as a template.',
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    if (checklists.length === 0) {
+      toast({
+        title: 'Backfill blocked',
+        description: 'No checklists found in the database to use as procedures template.',
         variant: 'destructive'
       });
       setAutomating(false);
@@ -165,11 +175,11 @@ export default function Dashboard() {
       checklistCounts.set(checklist.visa_type, (checklistCounts.get(checklist.visa_type) || 0) + 1);
     });
 
-    const templateVisaCode = manualVisas
+    const templateVisaCodeWithMostChecklists = manualVisas
       .sort((a, b) => (checklistCounts.get(b.code) || 0) - (checklistCounts.get(a.code) || 0))[0]
       ?.code;
 
-    if (!templateVisaCode) {
+    if (!templateVisaCodeWithMostChecklists) {
       toast({
         title: 'Backfill blocked',
         description: 'Unable to determine a checklist template visa type.',
@@ -180,7 +190,7 @@ export default function Dashboard() {
     }
 
     const templateChecklists = checklists
-      .filter((checklist) => checklist.visa_type === templateVisaCode)
+      .filter((checklist) => checklist.visa_type === templateVisaCodeWithMostChecklists)
       .sort((a, b) => a.sort_order - b.sort_order);
 
     if (templateChecklists.length === 0) {
