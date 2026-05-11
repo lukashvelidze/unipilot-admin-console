@@ -332,7 +332,7 @@ export default function Dashboard() {
 
     await fetchDashboardData();
     toast({
-      title: 'AI backfill complete',
+      title: 'Automated backfill complete',
       description: 'All destination countries and checklist procedures were synced to the database.'
     });
     setAutomating(false);
@@ -427,7 +427,7 @@ export default function Dashboard() {
             >
               {automating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Bot className="h-5 w-5" />}
               <div className="text-left">
-                <p className="font-medium">Run AI Country & Procedure Backfill</p>
+                <p className="font-medium">Run Automated Country & Procedure Backfill</p>
                 <p className="text-sm opacity-90">Sync all destination countries and auto-create matching plans.</p>
               </div>
             </Button>
