@@ -27,13 +27,24 @@ type ArticleSourceRow = {
   updated_at: string;
 };
 
-const sanitizeText = (value: string, maxLength = 400) =>
-  value
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '')
-    .replace(/[<>"'`]/g, '')
-    .trim()
-    .slice(0, maxLength);
+const sanitizeText = (value: string, maxLength = 400) => value.trim().slice(0, maxLength);
+
+const normalizeSourceUrl = (value?: string) => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (trimmed.startsWith('/')) return trimmed;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString();
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+};
 
 const normalizeTextList = (value: unknown) => {
   if (!Array.isArray(value)) return [];
@@ -98,7 +109,7 @@ const normalizeAiPlan = (data: unknown): JourneyPlan | null => {
           .map((source, index) => ({
             id: source.id || `source-${index + 1}`,
             label: sanitizeText(source.label || 'Reference', 120),
-            url: source.url ? sanitizeText(source.url, 500) : undefined,
+            url: source.url ? normalizeSourceUrl(source.url) : undefined,
             lastUpdatedAt: typeof source.lastUpdatedAt === 'string' ? source.lastUpdatedAt : undefined,
           }))
           .filter((source) => source.label)
@@ -259,14 +270,31 @@ export async function generateJourneyPlan(request: JourneyPlannerRequest): Promi
     throw new Error(itemError.message);
   }
 
-  const { data: sourcesData } = await supabase
-    .from('articles')
-    .select('id, title, slug, updated_at')
-    .eq('published', true)
-    .eq('access_tier', 'free')
-    .or(`destination_country_code.eq.${safeRequest.destinationCountryCode},is_global.eq.true`)
-    .order('updated_at', { ascending: false })
-    .limit(3);
+  const [routeSourcesRes, globalSourcesRes] = await Promise.all([
+    supabase
+      .from('articles')
+      .select('id, title, slug, updated_at')
+      .eq('published', true)
+      .eq('access_tier', 'free')
+      .eq('destination_country_code', safeRequest.destinationCountryCode)
+      .order('updated_at', { ascending: false })
+      .limit(3),
+    supabase
+      .from('articles')
+      .select('id, title, slug, updated_at')
+      .eq('published', true)
+      .eq('access_tier', 'free')
+      .eq('is_global', true)
+      .order('updated_at', { ascending: false })
+      .limit(3),
+  ]);
+
+  const sourceMap = new Map<string, ArticleSourceRow>();
+  (routeSourcesRes.data || []).forEach((source) => sourceMap.set(source.id, source as ArticleSourceRow));
+  (globalSourcesRes.data || []).forEach((source) => sourceMap.set(source.id, source as ArticleSourceRow));
+  const sourcesData = Array.from(sourceMap.values())
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, 3);
 
   return buildFallbackPlan(
     safeRequest,

@@ -52,7 +52,7 @@ create table if not exists public.journey_plan_sources (
   version_id uuid not null references public.journey_plan_versions(id) on delete cascade,
   label text not null,
   url text,
-  updated_at timestamptz,
+  last_updated_at timestamptz,
   created_at timestamptz not null default now()
 );
 

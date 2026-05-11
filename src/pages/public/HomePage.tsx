@@ -331,7 +331,17 @@ export function HomePage() {
                 <div>
                   <h3 className="text-xl font-semibold tracking-[-0.02em]">Your generated journey plan</h3>
                   <p className="text-sm text-slate-600">
-                    Last updated: {new Date(latestPlan.lastUpdatedAt).toLocaleString()} • Mode: {latestPlan.generationMode === 'ai' ? 'AI automation' : 'Checklist fallback'}
+                    Last updated:{' '}
+                    {new Date(latestPlan.lastUpdatedAt).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}{' '}
+                    {new Date(latestPlan.lastUpdatedAt).toLocaleTimeString(undefined, {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}{' '}
+                    • Mode: {latestPlan.generationMode === 'ai' ? 'AI automation' : 'Checklist fallback'}
                   </p>
                 </div>
                 <span className="rounded-full border border-black/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.15em] text-slate-600">
@@ -387,7 +397,7 @@ export function HomePage() {
                       <li>No deadlines available.</li>
                     ) : (
                       latestPlan.deadlines.map((deadline, index) => (
-                        <li key={`${deadline}-${index}`}>{deadline}</li>
+                        <li key={index}>{deadline}</li>
                       ))
                     )}
                   </ul>
@@ -399,7 +409,7 @@ export function HomePage() {
                       <li>No additional notes.</li>
                     ) : (
                       latestPlan.notes.map((note, index) => (
-                        <li key={`${note}-${index}`}>{note}</li>
+                        <li key={index}>{note}</li>
                       ))
                     )}
                   </ul>
