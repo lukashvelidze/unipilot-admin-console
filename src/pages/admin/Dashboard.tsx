@@ -8,14 +8,6 @@ import { Users, Globe, CheckSquare, Stamp, Loader2, FileText, Bot } from 'lucide
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -130,7 +122,6 @@ export default function Dashboard() {
   const [recentProfiles, setRecentProfiles] = useState<RecentProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [automating, setAutomating] = useState(false);
-  const [automationDialogOpen, setAutomationDialogOpen] = useState(false);
   const [automationForm, setAutomationForm] = useState({
     destinationCountry: 'all',
     originCountry: 'all',
@@ -463,7 +454,6 @@ export default function Dashboard() {
         description: `Visa plans were synced for ${destinationSummary}${originSummary} (${educationSummary}). No checklist procedures required updates.`
       });
       setAutomating(false);
-      setAutomationDialogOpen(false);
       return;
     }
 
@@ -517,7 +507,6 @@ export default function Dashboard() {
       description: `Checklist procedures were synced for ${destinationSummary}${originSummary} (${educationSummary}).`
     });
     setAutomating(false);
-    setAutomationDialogOpen(false);
   };
 
   const userColumns = [
@@ -604,18 +593,83 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
             </div>
-            <Button
-              type="button"
-              onClick={() => setAutomationDialogOpen(true)}
-              disabled={automating}
-              className="w-full justify-start gap-3 h-auto p-4"
-            >
-              {automating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Bot className="h-5 w-5" />}
-              <div className="text-left">
-                <p className="font-medium">Generate Country Checklists</p>
-                <p className="text-sm opacity-90">Pick origin, destination, and education level to auto-create procedures.</p>
+            <div className="space-y-4 rounded-lg border border-border bg-card p-4">
+              <div className="flex items-start gap-3">
+                <Bot className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Generate Country Checklists</p>
+                  <p className="text-sm text-muted-foreground">Pick origin, destination, and education level to auto-create procedures.</p>
+                </div>
               </div>
-            </Button>
+              <div className="grid gap-4 py-1">
+                <div className="grid gap-2">
+                  <Label>Destination country</Label>
+                  <Select
+                    value={automationForm.destinationCountry}
+                    onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, destinationCountry: value }))}
+                    disabled={automating || destinationChoices.length === 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select destination" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All destinations</SelectItem>
+                      {destinationChoices.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Origin country (optional)</Label>
+                  <Select
+                    value={automationForm.originCountry}
+                    onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, originCountry: value }))}
+                    disabled={automating || originChoices.length === 0}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All origins" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All origins</SelectItem>
+                      {originChoices.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Education level</Label>
+                  <Select
+                    value={automationForm.educationLevel}
+                    onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, educationLevel: value }))}
+                    disabled={automating}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EDUCATION_LEVELS.map((level) => (
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {destinationChoices.length === 0 && (
+                  <p className="text-sm text-destructive">No destination countries are available for automation.</p>
+                )}
+                <Button onClick={runAutomatedBackfill} disabled={automating || destinationChoices.length === 0}>
+                  {automating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Generate
+                </Button>
+              </div>
+            </div>
             <div className="grid gap-3">
               <Link
                 to="/admin/checklists"
@@ -661,90 +715,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-
-      <Dialog open={automationDialogOpen} onOpenChange={setAutomationDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generate country checklists</DialogTitle>
-            <DialogDescription>
-              Choose the destination, education level, and optionally an origin country to auto-create visa plans and procedures.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label>Destination country</Label>
-              <Select
-                value={automationForm.destinationCountry}
-                onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, destinationCountry: value }))}
-                disabled={automating || destinationChoices.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select destination" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All destinations</SelectItem>
-                  {destinationChoices.map((country) => (
-                    <SelectItem key={country.code} value={country.code}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Origin country (optional)</Label>
-              <Select
-                value={automationForm.originCountry}
-                onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, originCountry: value }))}
-                disabled={automating || originChoices.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All origins" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All origins</SelectItem>
-                  {originChoices.map((country) => (
-                    <SelectItem key={country.code} value={country.code}>
-                      {country.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Education level</Label>
-              <Select
-                value={automationForm.educationLevel}
-                onValueChange={(value) => setAutomationForm((prev) => ({ ...prev, educationLevel: value }))}
-                disabled={automating}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EDUCATION_LEVELS.map((level) => (
-                    <SelectItem key={level.value} value={level.value}>
-                      {level.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {destinationChoices.length === 0 && (
-              <p className="text-sm text-destructive">No destination countries are available for automation.</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAutomationDialogOpen(false)} disabled={automating}>
-              Cancel
-            </Button>
-            <Button onClick={runAutomatedBackfill} disabled={automating || destinationChoices.length === 0}>
-              {automating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Generate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AdminLayout>
   );
 }
