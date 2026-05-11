@@ -141,10 +141,6 @@ export default function Dashboard() {
   const fallbackCountries = useMemo(() => getAllDestinationCountries(), []);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
-
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
 
@@ -187,6 +183,10 @@ export default function Dashboard() {
     setLoading(false);
   }, [toast]);
 
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
   const runAutomatedBackfill = async () => {
     setAutomating(true);
 
@@ -217,7 +217,9 @@ export default function Dashboard() {
       return;
     }
 
-    const selectedEducation = EDUCATION_LEVELS.find((level) => level.value === automationForm.educationLevel) || EDUCATION_LEVELS[0];
+    const selectedEducation = EDUCATION_LEVELS.find((level) => level.value === automationForm.educationLevel)
+      || EDUCATION_LEVELS.find((level) => level.value === DEFAULT_EDUCATION_LEVEL)
+      || EDUCATION_LEVELS[0];
     const originCode = automationForm.originCountry === 'all' ? null : automationForm.originCountry;
     const originName = originCode
       ? originChoices.find((country) => country.code === originCode)?.name || originCode
@@ -665,7 +667,7 @@ export default function Dashboard() {
           <DialogHeader>
             <DialogTitle>Generate country checklists</DialogTitle>
             <DialogDescription>
-              Choose the origin, destination, and education level to auto-create visa plans and procedures.
+              Choose the destination, education level, and optionally an origin country to auto-create visa plans and procedures.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
