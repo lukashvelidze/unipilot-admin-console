@@ -4,8 +4,10 @@ import { StatsCard } from '@/components/admin/StatsCard';
 import { DataTable } from '@/components/admin/DataTable';
 import { StatusBadge } from '@/components/admin/StatusBadge';
 import { supabase } from '@/lib/supabase';
-import { Users, Globe, CheckSquare, Stamp, Loader2, FileText } from 'lucide-react';
+import { Users, Globe, CheckSquare, Stamp, Loader2, FileText, Bot } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 interface DashboardStats {
   totalCountries: number;
@@ -21,6 +23,60 @@ interface RecentProfile {
   created_at: string;
 }
 
+interface AutoCountry {
+  code: string;
+  name: string;
+  is_active: boolean;
+}
+
+interface AutoChecklist {
+  id: string;
+  visa_type: string;
+  title: string;
+  sort_order: number;
+  country_code: string | null;
+  subscription_tier: 'free' | 'basic' | 'standard' | 'premium';
+}
+
+interface AutoChecklistItem {
+  id: string;
+  checklist_id: string | null;
+  label: string;
+  field_type: string;
+  metadata: Record<string, unknown>;
+  sort_order: number;
+}
+
+interface AutoVisaType {
+  code: string;
+  country_code: string | null;
+  title: string;
+  description: string | null;
+  is_active: boolean;
+}
+
+const AUTO_VISA_PREFIX = 'AUTO_STUDENT_';
+
+const getAllCountryCodes = () => {
+  const supportedValuesOf = (Intl as unknown as {
+    supportedValuesOf?: (key: string) => string[];
+  }).supportedValuesOf;
+
+  if (!supportedValuesOf) return [];
+
+  return supportedValuesOf('region').filter((code) => /^[A-Z]{2}$/.test(code));
+};
+
+const getAllDestinationCountries = (): AutoCountry[] => {
+  const countryCodes = getAllCountryCodes();
+  const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+
+  return countryCodes
+    .map((code) => ({ code, name: regionNames.of(code) || code, is_active: true }))
+    .filter((country) => country.name !== country.code)
+    .sort((a, b) => a.name.localeCompare(b.name));
+};
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalCountries: 0,
@@ -29,6 +85,8 @@ export default function Dashboard() {
   });
   const [recentProfiles, setRecentProfiles] = useState<RecentProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [automating, setAutomating] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchDashboardData();
@@ -52,6 +110,232 @@ export default function Dashboard() {
 
     setRecentProfiles(profilesRes.data || []);
     setLoading(false);
+  };
+
+  const runAutomatedBackfill = async () => {
+    setAutomating(true);
+
+    const allCountries = getAllDestinationCountries();
+    if (allCountries.length === 0) {
+      toast({
+        title: 'Automation unavailable',
+        description: 'Unable to resolve full country list in this browser.',
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const [visaRes, checklistRes, itemRes] = await Promise.all([
+      supabase.from('visa_types').select('code, country_code, title, description, is_active'),
+      supabase.from('checklists').select('id, visa_type, title, sort_order, country_code, subscription_tier'),
+      supabase.from('checklist_items').select('id, checklist_id, label, field_type, metadata, sort_order')
+    ]);
+
+    if (visaRes.error || checklistRes.error || itemRes.error) {
+      toast({
+        title: 'Backfill failed',
+        description: visaRes.error?.message || checklistRes.error?.message || itemRes.error?.message || 'Unknown error',
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const visas = (visaRes.data || []) as AutoVisaType[];
+    const checklists = (checklistRes.data || []) as AutoChecklist[];
+    const checklistItems = (itemRes.data || []) as AutoChecklistItem[];
+
+    const manualVisas = visas.filter((visa) => !visa.code.startsWith(AUTO_VISA_PREFIX));
+    if (manualVisas.length === 0 || checklists.length === 0) {
+      toast({
+        title: 'Backfill blocked',
+        description: 'Please keep at least one manually created visa/checklist template.',
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const checklistCounts = new Map<string, number>();
+    checklists.forEach((checklist) => {
+      checklistCounts.set(checklist.visa_type, (checklistCounts.get(checklist.visa_type) || 0) + 1);
+    });
+
+    const templateVisaCode = manualVisas
+      .sort((a, b) => (checklistCounts.get(b.code) || 0) - (checklistCounts.get(a.code) || 0))[0]
+      ?.code;
+
+    const templateChecklists = checklists
+      .filter((checklist) => checklist.visa_type === templateVisaCode)
+      .sort((a, b) => a.sort_order - b.sort_order);
+
+    if (templateChecklists.length === 0) {
+      toast({
+        title: 'Backfill blocked',
+        description: 'The selected template visa has no checklist procedures.',
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const templateItemsByChecklistId = new Map<string, AutoChecklistItem[]>();
+    checklistItems.forEach((item) => {
+      if (!item.checklist_id) return;
+      if (!templateChecklists.some((checklist) => checklist.id === item.checklist_id)) return;
+
+      const existing = templateItemsByChecklistId.get(item.checklist_id) || [];
+      existing.push(item);
+      templateItemsByChecklistId.set(item.checklist_id, existing);
+    });
+
+    const templateItemsByChecklistTitle = new Map<string, AutoChecklistItem[]>();
+    templateChecklists.forEach((checklist) => {
+      const templateItems = (templateItemsByChecklistId.get(checklist.id) || [])
+        .slice()
+        .sort((a, b) => a.sort_order - b.sort_order);
+      templateItemsByChecklistTitle.set(checklist.title, templateItems);
+    });
+
+    const { error: countriesUpsertError } = await supabase
+      .from('destination_countries')
+      .upsert(allCountries, { onConflict: 'code' });
+
+    if (countriesUpsertError) {
+      toast({ title: 'Country sync failed', description: countriesUpsertError.message, variant: 'destructive' });
+      setAutomating(false);
+      return;
+    }
+
+    const autoVisaPayload = allCountries.map((country) => ({
+      code: `${AUTO_VISA_PREFIX}${country.code}`,
+      country_code: country.code,
+      title: 'Student Visa Plan',
+      description: 'Auto-generated student visa plan based on your base procedures.',
+      is_active: true
+    }));
+
+    const { error: visasUpsertError } = await supabase
+      .from('visa_types')
+      .upsert(autoVisaPayload, { onConflict: 'code' });
+
+    if (visasUpsertError) {
+      toast({ title: 'Visa sync failed', description: visasUpsertError.message, variant: 'destructive' });
+      setAutomating(false);
+      return;
+    }
+
+    const { data: existingAutoChecklists, error: existingAutoChecklistsError } = await supabase
+      .from('checklists')
+      .select('id, visa_type, title')
+      .like('visa_type', `${AUTO_VISA_PREFIX}%`);
+
+    if (existingAutoChecklistsError) {
+      toast({
+        title: 'Checklist sync failed',
+        description: existingAutoChecklistsError.message,
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const existingChecklistKeys = new Set(
+      (existingAutoChecklists || []).map((checklist) => `${checklist.visa_type}::${checklist.title}`)
+    );
+
+    const missingChecklistPayload = allCountries.flatMap((country) => {
+      const visaCode = `${AUTO_VISA_PREFIX}${country.code}`;
+      return templateChecklists
+        .filter((templateChecklist) => !existingChecklistKeys.has(`${visaCode}::${templateChecklist.title}`))
+        .map((templateChecklist) => ({
+          visa_type: visaCode,
+          country_code: country.code,
+          title: templateChecklist.title,
+          subscription_tier: templateChecklist.subscription_tier,
+          sort_order: templateChecklist.sort_order
+        }));
+    });
+
+    if (missingChecklistPayload.length > 0) {
+      const { error: insertChecklistsError } = await supabase
+        .from('checklists')
+        .insert(missingChecklistPayload);
+
+      if (insertChecklistsError) {
+        toast({ title: 'Checklist sync failed', description: insertChecklistsError.message, variant: 'destructive' });
+        setAutomating(false);
+        return;
+      }
+    }
+
+    const { data: allAutoChecklists, error: allAutoChecklistsError } = await supabase
+      .from('checklists')
+      .select('id, title')
+      .like('visa_type', `${AUTO_VISA_PREFIX}%`);
+
+    if (allAutoChecklistsError) {
+      toast({
+        title: 'Checklist item sync failed',
+        description: allAutoChecklistsError.message,
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const autoChecklistIds = (allAutoChecklists || []).map((checklist) => checklist.id);
+    const { data: existingAutoItems, error: existingAutoItemsError } = await supabase
+      .from('checklist_items')
+      .select('checklist_id, label, sort_order')
+      .in('checklist_id', autoChecklistIds);
+
+    if (existingAutoItemsError) {
+      toast({
+        title: 'Checklist item sync failed',
+        description: existingAutoItemsError.message,
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
+    const existingItemKeys = new Set(
+      (existingAutoItems || []).map((item) => `${item.checklist_id}::${item.label}::${item.sort_order}`)
+    );
+
+    const missingItemsPayload = (allAutoChecklists || []).flatMap((checklist) => {
+      const templateItems = templateItemsByChecklistTitle.get(checklist.title) || [];
+      return templateItems
+        .filter((item) => !existingItemKeys.has(`${checklist.id}::${item.label}::${item.sort_order}`))
+        .map((item) => ({
+          checklist_id: checklist.id,
+          label: item.label,
+          field_type: item.field_type,
+          metadata: item.metadata,
+          sort_order: item.sort_order
+        }));
+    });
+
+    if (missingItemsPayload.length > 0) {
+      const { error: insertItemsError } = await supabase
+        .from('checklist_items')
+        .insert(missingItemsPayload);
+
+      if (insertItemsError) {
+        toast({ title: 'Checklist item sync failed', description: insertItemsError.message, variant: 'destructive' });
+        setAutomating(false);
+        return;
+      }
+    }
+
+    await fetchDashboardData();
+    toast({
+      title: 'AI backfill complete',
+      description: 'All destination countries and checklist procedures were synced to the database.'
+    });
+    setAutomating(false);
   };
 
   const userColumns = [
@@ -135,6 +419,18 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
             </div>
+            <Button
+              type="button"
+              onClick={runAutomatedBackfill}
+              disabled={automating}
+              className="w-full justify-start gap-3 h-auto p-4"
+            >
+              {automating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Bot className="h-5 w-5" />}
+              <div className="text-left">
+                <p className="font-medium">Run AI Country & Procedure Backfill</p>
+                <p className="text-sm opacity-90">Sync all destination countries and auto-create matching plans.</p>
+              </div>
+            </Button>
             <div className="grid gap-3">
               <Link
                 to="/admin/checklists"
