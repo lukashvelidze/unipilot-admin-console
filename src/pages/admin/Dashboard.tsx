@@ -56,6 +56,9 @@ interface AutoVisaType {
 }
 
 const AUTO_VISA_PREFIX = 'AUTO_STUDENT_';
+const makeChecklistKey = (visaType: string, title: string) => JSON.stringify({ visaType, title });
+const makeChecklistItemKey = (checklistId: string | null, label: string, sortOrder: number) =>
+  JSON.stringify({ checklistId, label, sortOrder });
 
 const getAllCountryCodes = () => {
   const supportedValuesOf = (Intl as unknown as {
@@ -166,6 +169,16 @@ export default function Dashboard() {
       .sort((a, b) => (checklistCounts.get(b.code) || 0) - (checklistCounts.get(a.code) || 0))[0]
       ?.code;
 
+    if (!templateVisaCode) {
+      toast({
+        title: 'Backfill blocked',
+        description: 'Unable to determine a checklist template visa type.',
+        variant: 'destructive'
+      });
+      setAutomating(false);
+      return;
+    }
+
     const templateChecklists = checklists
       .filter((checklist) => checklist.visa_type === templateVisaCode)
       .sort((a, b) => a.sort_order - b.sort_order);
@@ -241,9 +254,8 @@ export default function Dashboard() {
       return;
     }
 
-    const existingChecklistKeys = new Set(
-      (existingAutoChecklists || []).map((checklist) => `${checklist.visa_type}::${checklist.title}`)
-    );
+    const initialAutoChecklists = existingAutoChecklists || [];
+    const existingChecklistKeys = new Set(initialAutoChecklists.map((checklist) => makeChecklistKey(checklist.visa_type, checklist.title)));
 
     const missingChecklistPayload = allCountries.flatMap((country) => {
       const visaCode = `${AUTO_VISA_PREFIX}${country.code}`;
@@ -270,22 +282,41 @@ export default function Dashboard() {
       }
     }
 
-    const { data: allAutoChecklists, error: allAutoChecklistsError } = await supabase
-      .from('checklists')
-      .select('id, title')
-      .like('visa_type', `${AUTO_VISA_PREFIX}%`);
+    let allAutoChecklists: Array<{ id: string; title: string }> = initialAutoChecklists.map((checklist) => ({
+      id: checklist.id,
+      title: checklist.title
+    }));
 
-    if (allAutoChecklistsError) {
+    if (missingChecklistPayload.length > 0) {
+      const { data: refreshedAutoChecklists, error: refreshedAutoChecklistsError } = await supabase
+        .from('checklists')
+        .select('id, title')
+        .like('visa_type', `${AUTO_VISA_PREFIX}%`);
+
+      if (refreshedAutoChecklistsError) {
+        toast({
+          title: 'Checklist item sync failed',
+          description: refreshedAutoChecklistsError.message,
+          variant: 'destructive'
+        });
+        setAutomating(false);
+        return;
+      }
+
+      allAutoChecklists = refreshedAutoChecklists || [];
+    }
+
+    const autoChecklistIds = allAutoChecklists.map((checklist) => checklist.id);
+    if (autoChecklistIds.length === 0) {
+      await fetchDashboardData();
       toast({
-        title: 'Checklist item sync failed',
-        description: allAutoChecklistsError.message,
-        variant: 'destructive'
+        title: 'Automated backfill complete',
+        description: 'Countries and visa plans were synced. No checklist procedures required updates.'
       });
       setAutomating(false);
       return;
     }
 
-    const autoChecklistIds = (allAutoChecklists || []).map((checklist) => checklist.id);
     const { data: existingAutoItems, error: existingAutoItemsError } = await supabase
       .from('checklist_items')
       .select('checklist_id, label, sort_order')
@@ -302,13 +333,13 @@ export default function Dashboard() {
     }
 
     const existingItemKeys = new Set(
-      (existingAutoItems || []).map((item) => `${item.checklist_id}::${item.label}::${item.sort_order}`)
+      (existingAutoItems || []).map((item) => makeChecklistItemKey(item.checklist_id, item.label, item.sort_order))
     );
 
-    const missingItemsPayload = (allAutoChecklists || []).flatMap((checklist) => {
+    const missingItemsPayload = allAutoChecklists.flatMap((checklist) => {
       const templateItems = templateItemsByChecklistTitle.get(checklist.title) || [];
       return templateItems
-        .filter((item) => !existingItemKeys.has(`${checklist.id}::${item.label}::${item.sort_order}`))
+        .filter((item) => !existingItemKeys.has(makeChecklistItemKey(checklist.id, item.label, item.sort_order)))
         .map((item) => ({
           checklist_id: checklist.id,
           label: item.label,
