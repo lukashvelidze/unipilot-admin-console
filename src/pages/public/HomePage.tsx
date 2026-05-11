@@ -383,13 +383,25 @@ export function HomePage() {
                 <div className="rounded-2xl border border-black/8 bg-slate-50 p-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">Deadlines</p>
                   <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
-                    {latestPlan.deadlines.length === 0 ? <li>No deadlines available.</li> : latestPlan.deadlines.map((deadline, index) => <li key={`${deadline}-${index}`}>{deadline}</li>)}
+                    {latestPlan.deadlines.length === 0 ? (
+                      <li>No deadlines available.</li>
+                    ) : (
+                      latestPlan.deadlines.map((deadline, index) => (
+                        <li key={`${deadline}-${index}`}>{deadline}</li>
+                      ))
+                    )}
                   </ul>
                 </div>
                 <div className="rounded-2xl border border-black/8 bg-slate-50 p-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">Notes</p>
                   <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
-                    {latestPlan.notes.length === 0 ? <li>No additional notes.</li> : latestPlan.notes.map((note, index) => <li key={`${note}-${index}`}>{note}</li>)}
+                    {latestPlan.notes.length === 0 ? (
+                      <li>No additional notes.</li>
+                    ) : (
+                      latestPlan.notes.map((note, index) => (
+                        <li key={`${note}-${index}`}>{note}</li>
+                      ))
+                    )}
                   </ul>
                 </div>
                 <div className="rounded-2xl border border-black/8 bg-slate-50 p-4">

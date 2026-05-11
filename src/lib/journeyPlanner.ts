@@ -29,8 +29,9 @@ type ArticleSourceRow = {
 
 const sanitizeText = (value: string, maxLength = 400) =>
   value
-    .replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi, '')
-    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .replace(/[<>"'`]/g, '')
     .trim()
     .slice(0, maxLength);
 
@@ -239,7 +240,10 @@ export async function generateJourneyPlan(request: JourneyPlannerRequest): Promi
   const { data: checklistsData, error: checklistError } = await checklistQuery;
 
   if (checklistError) {
-    throw new Error(aiError?.message || checklistError.message);
+    const aiFailureReason = aiError?.message
+      ? `AI generation failed (${aiError.message})`
+      : 'AI generation unavailable';
+    throw new Error(`${aiFailureReason}; checklist retrieval failed (${checklistError.message})`);
   }
 
   const checklistIds = (checklistsData || []).map((checklist) => checklist.id);
