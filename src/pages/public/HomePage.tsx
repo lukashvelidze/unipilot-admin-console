@@ -1,10 +1,21 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Clock3, FileCheck2, PlaneTakeoff } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Clock3, FileCheck2, Loader2, PlaneTakeoff, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { RotatingGlobe } from '@/components/public/RotatingGlobe';
+import { fetchJourneyPlannerOptions, generateJourneyPlan } from '@/lib/journeyPlanner';
+import { JourneyPlan } from '@/types/journeyPlanner';
 
 const appStoreUrl = 'https://apps.apple.com/us/app/unipilot-journey-tracker/id6748587544';
 const ambassadorProgramUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeyjSw2h6nV8wlyFW5aKQPDXJQFhyQ3_DZ_RO0f-2Z6kkjr7g/viewform';
+const localPlannerStorageKey = 'unipilot:journey-planner:v1';
 
 const features = [
   {
@@ -32,7 +43,121 @@ const bullets = [
   'Arrival planning',
 ];
 
+const studyLevels = [
+  { value: 'all', label: 'Any study level' },
+  { value: 'bachelor', label: 'Bachelor' },
+  { value: 'master', label: 'Master' },
+  { value: 'phd', label: 'PhD' },
+  { value: 'language', label: 'Language program' },
+  { value: 'exchange', label: 'Exchange / pathway' },
+];
+
+type PlannerStoragePayload = {
+  originCountryCode: string;
+  destinationCountryCode: string;
+  visaTypeCode: string;
+  levelOfStudy: string;
+  latestPlan: JourneyPlan | null;
+};
+
 export function HomePage() {
+  const [originCountries, setOriginCountries] = useState<Array<{ code: string; name: string }>>([]);
+  const [destinationCountries, setDestinationCountries] = useState<Array<{ code: string; name: string }>>([]);
+  const [visaTypes, setVisaTypes] = useState<Array<{ code: string; title: string; country_code: string | null }>>([]);
+
+  const [originCountryCode, setOriginCountryCode] = useState('');
+  const [destinationCountryCode, setDestinationCountryCode] = useState('');
+  const [visaTypeCode, setVisaTypeCode] = useState('all');
+  const [levelOfStudy, setLevelOfStudy] = useState('all');
+
+  const [plannerLoading, setPlannerLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [plannerError, setPlannerError] = useState<string | null>(null);
+  const [latestPlan, setLatestPlan] = useState<JourneyPlan | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(localPlannerStorageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved) as PlannerStoragePayload;
+        setOriginCountryCode(parsed.originCountryCode || '');
+        setDestinationCountryCode(parsed.destinationCountryCode || '');
+        setVisaTypeCode(parsed.visaTypeCode || 'all');
+        setLevelOfStudy(parsed.levelOfStudy || 'all');
+        setLatestPlan(parsed.latestPlan || null);
+      }
+    } catch {
+      localStorage.removeItem(localPlannerStorageKey);
+    }
+
+    const loadOptions = async () => {
+      setPlannerLoading(true);
+      try {
+        const options = await fetchJourneyPlannerOptions();
+        setOriginCountries(options.originCountries);
+        setDestinationCountries(options.destinationCountries);
+        setVisaTypes(options.visaTypes);
+      } catch (error) {
+        setPlannerError(error instanceof Error ? error.message : 'Failed to load planner options.');
+      } finally {
+        setPlannerLoading(false);
+      }
+    };
+
+    loadOptions();
+  }, []);
+
+  const availableVisaTypes = useMemo(
+    () =>
+      visaTypes.filter(
+        (visa) => !destinationCountryCode || !visa.country_code || visa.country_code === destinationCountryCode
+      ),
+    [destinationCountryCode, visaTypes]
+  );
+
+  const persistPlannerState = (plan: JourneyPlan | null) => {
+    const payload: PlannerStoragePayload = {
+      originCountryCode,
+      destinationCountryCode,
+      visaTypeCode,
+      levelOfStudy,
+      latestPlan: plan,
+    };
+    localStorage.setItem(localPlannerStorageKey, JSON.stringify(payload));
+  };
+
+  const handleGeneratePlan = async () => {
+    if (!originCountryCode || !destinationCountryCode) {
+      setPlannerError('Select both origin and destination countries before generating a plan.');
+      return;
+    }
+
+    setPlannerError(null);
+    setIsGenerating(true);
+
+    try {
+      const generated = await generateJourneyPlan({
+        originCountryCode,
+        destinationCountryCode,
+        visaTypeCode: visaTypeCode === 'all' ? undefined : visaTypeCode,
+        levelOfStudy: levelOfStudy === 'all' ? undefined : levelOfStudy,
+      });
+
+      setLatestPlan(generated);
+      persistPlannerState(generated);
+    } catch (error) {
+      setPlannerError(error instanceof Error ? error.message : 'Failed to generate journey plan.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleResetPlanner = () => {
+    setLatestPlan(null);
+    setPlannerError(null);
+    localStorage.removeItem(localPlannerStorageKey);
+  };
+
   return (
     <div className="bg-white font-sans text-slate-950">
       <section className="border-b border-black/6 bg-white">
@@ -86,6 +211,210 @@ export function HomePage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="journey-planner" className="border-b border-black/8 bg-slate-50 py-12 sm:py-16">
+        <div className="container mx-auto space-y-6 px-4">
+          <div className="max-w-3xl space-y-3">
+            <p className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Journey Planner</p>
+            <h2 className="text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Generate your route-specific checklist</h2>
+            <p className="text-sm leading-7 text-slate-600 sm:text-base">
+              Select origin and destination countries and let UniPilot auto-build procedures, deadlines, and checklist items.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-black/8 bg-white p-5 shadow-sm sm:p-6">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-700">Origin country *</p>
+                <Select value={originCountryCode} onValueChange={setOriginCountryCode}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={plannerLoading ? 'Loading origins...' : 'Select origin'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {originCountries.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-700">Destination country *</p>
+                <Select value={destinationCountryCode} onValueChange={setDestinationCountryCode}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={plannerLoading ? 'Loading destinations...' : 'Select destination'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {destinationCountries.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-700">Visa type (optional)</p>
+                <Select value={visaTypeCode} onValueChange={setVisaTypeCode}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Any visa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any visa</SelectItem>
+                    {availableVisaTypes.map((visa) => (
+                      <SelectItem key={visa.code} value={visa.code}>
+                        {visa.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-700">Study level (optional)</p>
+                <Select value={levelOfStudy} onValueChange={setLevelOfStudy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Any study level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {studyLevels.map((level) => (
+                      <SelectItem key={level.value} value={level.value}>
+                        {level.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button onClick={handleGeneratePlan} disabled={isGenerating || plannerLoading} className="sm:min-w-[210px]">
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating plan...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Generate my plan
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={handleResetPlanner} disabled={!latestPlan && !plannerError}>
+                Clear saved plan
+              </Button>
+            </div>
+
+            <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                Generated guidance is informational and may vary by embassy/consulate. Always verify final requirements with official government sources.
+              </p>
+            </div>
+
+            {plannerError && (
+              <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {plannerError}
+              </div>
+            )}
+          </div>
+
+          {latestPlan && (
+            <div className="space-y-5 rounded-3xl border border-black/8 bg-white p-5 sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xl font-semibold tracking-[-0.02em]">Your generated journey plan</h3>
+                  <p className="text-sm text-slate-600">
+                    Last updated: {new Date(latestPlan.lastUpdatedAt).toLocaleString()} • Mode: {latestPlan.generationMode === 'ai' ? 'AI automation' : 'Checklist fallback'}
+                  </p>
+                </div>
+                <span className="rounded-full border border-black/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.15em] text-slate-600">
+                  Status: {latestPlan.status}
+                </span>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="space-y-3 rounded-2xl border border-black/8 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">Procedures</p>
+                  <ol className="space-y-3">
+                    {latestPlan.procedures.map((procedure) => (
+                      <li key={procedure.id} className="rounded-xl border border-black/8 bg-white p-3">
+                        <p className="text-sm font-semibold text-slate-900">{procedure.sortOrder}. {procedure.title}</p>
+                        <p className="mt-1 text-sm text-slate-600">{procedure.description}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div className="space-y-3 rounded-2xl border border-black/8 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">Checklist groups</p>
+                  <div className="space-y-3">
+                    {latestPlan.checklistGroups.length === 0 ? (
+                      <p className="rounded-xl border border-dashed border-black/15 bg-white p-3 text-sm text-slate-500">
+                        No checklist groups found for this route yet.
+                      </p>
+                    ) : (
+                      latestPlan.checklistGroups.map((group) => (
+                        <div key={group.id} className="rounded-xl border border-black/8 bg-white p-3">
+                          <p className="text-sm font-semibold text-slate-900">{group.title}</p>
+                          <p className="mt-1 text-xs uppercase tracking-[0.12em] text-slate-500">Tier: {group.subscriptionTier}</p>
+                          <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                            {group.items.map((item) => (
+                              <li key={item.id} className="flex items-start gap-2">
+                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                                <span>{item.label}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="rounded-2xl border border-black/8 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">Deadlines</p>
+                  <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                    {latestPlan.deadlines.length === 0 ? <li>No deadlines available.</li> : latestPlan.deadlines.map((deadline, index) => <li key={`${deadline}-${index}`}>{deadline}</li>)}
+                  </ul>
+                </div>
+                <div className="rounded-2xl border border-black/8 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">Notes</p>
+                  <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                    {latestPlan.notes.length === 0 ? <li>No additional notes.</li> : latestPlan.notes.map((note, index) => <li key={`${note}-${index}`}>{note}</li>)}
+                  </ul>
+                </div>
+                <div className="rounded-2xl border border-black/8 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">Sources</p>
+                  <ul className="mt-2 space-y-1.5 text-sm text-slate-600">
+                    {latestPlan.sources.length === 0 ? (
+                      <li>No linked sources.</li>
+                    ) : (
+                      latestPlan.sources.map((source) => (
+                        <li key={source.id}>
+                          {source.url ? (
+                            <Link to={source.url} className="underline decoration-slate-300 underline-offset-4 hover:text-slate-900">
+                              {source.label}
+                            </Link>
+                          ) : (
+                            source.label
+                          )}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
