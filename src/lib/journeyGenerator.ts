@@ -65,6 +65,7 @@ export interface ArticleDraft {
   summary: string;
   content: string;
   categoryKey: 'visa' | 'housing' | 'flights' | 'scholarships';
+  coverImageUrl: string;
 }
 
 export interface JourneyGenerationDraft {
@@ -604,6 +605,7 @@ const buildRouteArticles = (
       title: `${originName} to ${destinationName}: visa preparation for ${levelLabel} students`,
       summary: `A practical route guide for students moving from ${originName} to ${destinationName}, covering admissions evidence, financial proof, and consular preparation.`,
       content: buildVisaArticle(originName, destinationName, educationLevel),
+      coverImageUrl: buildArticleCoverImageUrl('visa', originName, destinationName, educationLevel),
     },
     {
       categoryKey: 'housing',
@@ -611,6 +613,7 @@ const buildRouteArticles = (
       title: `Finding housing in ${destinationName} as a ${levelLabel} student from ${originName}`,
       summary: `Housing decisions shape your first month abroad. This guide focuses on timing, documents, deposit risk, and arrival strategy for ${originName} to ${destinationName} students.`,
       content: buildHousingArticle(originName, destinationName, educationLevel),
+      coverImageUrl: buildArticleCoverImageUrl('housing', originName, destinationName, educationLevel),
     },
     {
       categoryKey: 'flights',
@@ -618,6 +621,7 @@ const buildRouteArticles = (
       title: `Planning your flight from ${originName} to ${destinationName} for ${levelLabel} study`,
       summary: `A route-based checklist for booking flights, carrying documents, handling baggage, and avoiding last-minute travel mistakes.`,
       content: buildFlightsArticle(originName, destinationName, educationLevel),
+      coverImageUrl: buildArticleCoverImageUrl('flights', originName, destinationName, educationLevel),
     },
     {
       categoryKey: 'scholarships',
@@ -625,8 +629,19 @@ const buildRouteArticles = (
       title: `Funding a ${levelLabel} journey in ${destinationName} from ${originName}`,
       summary: `How to combine scholarships, sponsor evidence, and practical budgeting when planning ${levelLabel} study in ${destinationName}.`,
       content: buildScholarshipsArticle(originName, destinationName, educationLevel),
+      coverImageUrl: buildArticleCoverImageUrl('scholarships', originName, destinationName, educationLevel),
     },
   ];
+};
+
+const buildArticleCoverImageUrl = (
+  categoryKey: ArticleDraft['categoryKey'],
+  originName: string,
+  destinationName: string,
+  educationLevel: EducationLevel
+) => {
+  const seed = slugify(`${categoryKey}-${originName}-${destinationName}-${educationLevel}`);
+  return `https://picsum.photos/seed/${seed}/1200/630`;
 };
 
 const buildVisaArticle = (originName: string, destinationName: string, educationLevel: EducationLevel) => {

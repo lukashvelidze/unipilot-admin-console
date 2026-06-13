@@ -348,7 +348,7 @@ export default function Dashboard() {
               title: article.title,
               summary: article.summary,
               content: article.content,
-              cover_image_url: null,
+              cover_image_url: article.coverImageUrl,
               destination_country_code: selectedDestination.code,
               origin_country_code: selectedOrigin.code,
               visa_types: [draft.routeVisaCode],
